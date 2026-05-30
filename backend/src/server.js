@@ -51,16 +51,45 @@ const __dirname = path.dirname(__filename);
 const REPO_DIR = path.join(__dirname, "..", "data");
 const REPO_FILE = path.join(REPO_DIR, "patient-repository.json");
 const REPO_AUDIT_FILE = path.join(REPO_DIR, "patient-repository-audit.log");
-const REPOSITORY_API_TOKEN = String(process.env.REPOSITORY_API_TOKEN || "").trim();
 const JWT_SECRET = String(process.env.JWT_SECRET || "").trim();
 const JWT_EXPIRES_IN = String(process.env.JWT_EXPIRES_IN || "8h").trim() || "8h";
 
 const defaultUsers = [
-  { id: "med_thiago_lima", email: "thiagolima@ortopguia.com.br", role: "medico", name: "Thiago Lima" },
-  { id: "med_tiago_careno", email: "tiagocareno@ortopguia.com.br", role: "medico", name: "Tiago Careno" },
-  { id: "med_ortoguia_alias", email: "thiagolima@ortoguia.com.br", role: "medico", name: "Thiago Lima" },
-  { id: "med_ortoguia_alias2", email: "tiagocareno@ortoguia.com.br", role: "medico", name: "Tiago Careno" },
-  { id: "sec_mariana", email: "sec.mariana@ortopguia.com.br", role: "secretaria", name: "Mariana" },
+  {
+    id: "med_thiago_lima",
+    email: "thiagolima@ortopguia.com.br",
+    role: "medico",
+    name: "Thiago Lima",
+    password: "TEMP_ALTERAR_001",
+  },
+  {
+    id: "med_tiago_careno",
+    email: "tiagocareno@ortopguia.com.br",
+    role: "medico",
+    name: "Tiago Careno",
+    password: "TEMP_ALTERAR_002",
+  },
+  {
+    id: "med_ortoguia_alias",
+    email: "thiagolima@ortoguia.com.br",
+    role: "medico",
+    name: "Thiago Lima",
+    password: "TEMP_ALTERAR_001",
+  },
+  {
+    id: "med_ortoguia_alias2",
+    email: "tiagocareno@ortoguia.com.br",
+    role: "medico",
+    name: "Tiago Careno",
+    password: "TEMP_ALTERAR_002",
+  },
+  {
+    id: "sec_mariana",
+    email: "sec.mariana@ortopguia.com.br",
+    role: "secretaria",
+    name: "Mariana",
+    password: "TEMP_ALTERAR_003",
+  },
 ];
 
 let authUsers = defaultUsers;
@@ -74,18 +103,12 @@ try {
         email: String(u.email).trim().toLowerCase(),
         role: String(u.role).trim().toLowerCase(),
         name: String(u.name || u.email).trim(),
+        password: String(u.password || "").trim(),
       }));
   }
 } catch {
   authUsers = defaultUsers;
 }
-
-const allowedPasswords = String(
-  process.env.AUTH_DEFAULT_PASSWORDS || "ortopguiapadrao,ortoguiapadrao,padrao,senhapadrao"
-)
-  .split(",")
-  .map((s) => s.trim())
-  .filter(Boolean);
 
 async function readRepository() {
   try {
@@ -162,21 +185,11 @@ function authorizeRepository(req, res, next) {
       };
       return next();
     } catch {
-      // fallback para token legado abaixo
+      return res.status(401).json({ ok: false, error: "Token JWT inválido" });
     }
   }
 
-  if (REPOSITORY_API_TOKEN && token === REPOSITORY_API_TOKEN) {
-    req.authUser = {
-      id: "legacy_repository_token",
-      email: "",
-      role: "system",
-      name: "Legacy Token",
-    };
-    return next();
-  }
-
-  return res.status(401).json({ ok: false, error: "Não autorizado para repositório" });
+  return res.status(401).json({ ok: false, error: "JWT obrigatório para repositório" });
 }
 
 // CORS — apenas origens permitidas
@@ -229,7 +242,7 @@ app.post("/api/auth/login", (req, res) => {
     }
 
     const user = authUsers.find((u) => u.email === email);
-    if (!user || !allowedPasswords.includes(password)) {
+    if (!user || !user.password || user.password !== password) {
       return res.status(401).json({ ok: false, error: "Credenciais inválidas" });
     }
 
