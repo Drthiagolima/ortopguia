@@ -1,0 +1,1350 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>ORTOPGUIA — Saúde Digital | ortoguia.com.br</title>
+<link rel="icon" type="image/svg+xml" href="favicon-ortoguia.svg">
+
+<meta name="description" content="ORTOPGUIA — atendimento ortopédico inicial guiado por inteligência artificial. Teleconsulta e consulta presencial. ortoguia.com.br">
+<link rel="canonical" href="https://ortoguia.com.br/">
+<meta property="og:title" content="ORTOPGUIA — Saúde Digital">
+<meta property="og:description" content="Atendimento ortopédico inicial guiado por inteligência artificial.">
+<meta property="og:url" content="https://ortoguia.com.br/">
+<meta property="og:type" content="website">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%}
+  body{background:#FCFDFE;font-family:'Inter','Segoe UI',-apple-system,sans-serif;color:#33393B;font-size:14px}
+  button{font-family:inherit;cursor:pointer}
+  input,select,textarea{font-family:inherit;outline:none}
+  input:focus,select:focus,textarea:focus{border-color:#1E4E58!important}
+  ::-webkit-scrollbar{width:5px;height:5px}
+  ::-webkit-scrollbar-thumb{background:#D5DFE3;border-radius:3px}
+  button:active{opacity:.85}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+  @keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+  svg{display:block}
+  .ico{width:18px;height:18px;stroke:currentColor;stroke-width:1.6;fill:none;stroke-linecap:round;stroke-linejoin:round}
+  .ico-sm{width:15px;height:15px;stroke:currentColor;stroke-width:1.6;fill:none;stroke-linecap:round;stroke-linejoin:round}
+  .ico-lg{width:34px;height:34px;stroke:currentColor;stroke-width:1.4;fill:none;stroke-linecap:round;stroke-linejoin:round}
+
+  .app{display:flex;min-height:100vh;background:#FCFDFE}
+
+  .logo{display:flex;align-items:center;gap:11px}
+  .logo .ic{width:38px;height:38px;border-radius:11px;background:#1E4E58;display:flex;align-items:center;justify-content:center}
+  .logo .ic svg{width:21px;height:21px;stroke:#fff;stroke-width:1.5;fill:none}
+  .logo .nm{font-family:'Sora',sans-serif;font-weight:600;font-size:18px;letter-spacing:-.4px;line-height:1.05}
+  .logo .nm .orto{color:#1E4E58}
+  .logo .nm .gu{color:#33393B}
+  .logo .nm .ia{color:#C99746;font-weight:700}
+  .logo .nm .ia .i-dot{position:relative;display:inline-block}
+  .logo .nm .ia .i-dot:after{content:"";position:absolute;left:50%;transform:translateX(-50%);top:-.18em;width:.2em;height:.2em;border-radius:50%;background:currentColor}
+  .logo .sb{color:#A2ABAE;font-size:8.5px;letter-spacing:2px;text-transform:uppercase;margin-top:3px}
+
+  .sidebar{width:226px;flex-shrink:0;min-height:100vh;background:#F4F8FA;border-right:1px solid #E6EDF0;display:flex;flex-direction:column}
+  .sb-head{padding:24px 20px 20px;border-bottom:1px solid #E6EDF0}
+  .sb-tag{color:#A2ABAE;font-size:10.5px;line-height:1.55;margin-top:14px}
+  .sb-nav{padding:14px 12px;flex:1}
+  .sb-nav button{display:flex;align-items:center;gap:12px;width:100%;padding:11px 13px;border-radius:10px;border:none;margin-bottom:4px;background:transparent;color:#566066;font-size:13px;text-align:left;transition:all .15s}
+  .sb-nav button:hover{background:rgba(30,78,88,.05)}
+  .sb-nav button.on{background:#FFFFFF;color:#13404A;font-weight:600;box-shadow:0 1px 5px rgba(19,64,74,.1)}
+  .sb-nav button .ico{color:#A2ABAE}
+  .sb-nav button.on .ico{color:#1E4E58}
+  .sb-foot{padding:14px 18px;border-top:1px solid #E6EDF0;display:flex;align-items:center;gap:10px}
+  .sb-foot .av{width:34px;height:34px;border-radius:50%;background:#1E4E58;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff}
+  .sb-foot .dn{color:#33393B;font-size:12px;font-weight:600}
+  .sb-foot .dr{color:#A2ABAE;font-size:10px}
+
+  .mhead{display:none;position:fixed;top:0;left:0;right:0;z-index:100;background:#FFFFFF;border-bottom:1px solid #E6EDF0;padding:11px 16px;align-items:center;box-shadow:0 1px 8px rgba(19,64,74,.04)}
+  .mhead .onl{margin-left:auto;display:flex;align-items:center;gap:6px}
+  .mhead .onl .d{width:7px;height:7px;border-radius:50%;background:#2E9E5B}
+  .mhead .onl span{font-size:10px;color:#697275}
+  .bnav{display:none;position:fixed;bottom:0;left:0;right:0;z-index:100;background:#FFFFFF;border-top:1px solid #E6EDF0;box-shadow:0 -1px 10px rgba(19,64,74,.04)}
+  .bnav button{flex:1;padding:8px 4px 6px;border:none;background:transparent;display:flex;flex-direction:column;align-items:center;gap:3px;border-top:2px solid transparent;color:#A2ABAE}
+  .bnav button.on{border-top-color:#C99746;color:#1E4E58}
+  .bnav button .l{font-size:9px}
+  .bnav button.on .l{font-weight:600}
+
+  .main{flex:1;padding:28px 34px;overflow-y:auto;max-height:100vh;background:#FCFDFE}
+  .topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:26px}
+  .pill{padding:6px 13px;background:#FFFFFF;border:1px solid #E6EDF0;border-radius:20px;font-size:11px;color:#697275;display:flex;align-items:center;gap:6px}
+  .pill svg{color:#1E4E58}
+  .h2{font-family:'Sora',sans-serif;font-size:23px;font-weight:700;letter-spacing:-.6px;color:#13404A}
+  .sub{color:#697275;font-size:12px;margin-top:5px}
+  .card{background:#FFFFFF;border-radius:12px;border:1px solid #E6EDF0;box-shadow:0 1px 3px rgba(19,64,74,.03)}
+  .legend{display:flex;gap:16px;margin-bottom:18px;flex-wrap:wrap}
+  .legend .it{display:flex;align-items:center;gap:6px;font-size:11px;color:#697275}
+  .legend .dot{width:9px;height:9px;border-radius:50%}
+
+  /* view tabs */
+  .vtabs{display:inline-flex;background:#EEF3F5;border:1px solid #E6EDF0;border-radius:10px;padding:3px;gap:2px;margin:16px 0 4px}
+  .vtabs button{padding:7px 16px;border:none;background:transparent;border-radius:8px;font-size:12px;font-weight:600;color:#697275;font-family:'Inter'}
+  .vtabs button.on{background:#FFFFFF;color:#13404A;box-shadow:0 1px 4px rgba(19,64,74,.1)}
+
+  /* AGENDA timeline */
+  .agwrap{display:flex;align-items:flex-start}
+  .timeline{width:66px;flex-shrink:0;background:#F4F8FA;border:1px solid #E6EDF0;border-radius:12px;padding:6px 0;position:relative;margin-right:14px}
+  .tl-row{height:74px;position:relative;display:flex;align-items:center;justify-content:flex-end;padding-right:8px}
+  .tl-row .hr{font-size:11px;color:#13404A;font-family:'Sora',monospace;font-weight:600;margin-right:14px}
+  .tl-row .dot{position:absolute;right:12px;width:14px;height:14px;border-radius:50%;border:3px solid #F4F8FA;z-index:3}
+  .tl-vline{position:absolute;right:18px;top:30px;bottom:30px;width:2px;background:#CBD8DD;z-index:1}
+  .tl-now{position:absolute;left:6px;right:6px;height:2px;background:#1E4E58;z-index:6}
+  .tl-now .nd{position:absolute;right:12px;top:50%;transform:translate(50%,-50%);width:10px;height:10px;border-radius:50%;background:#1E4E58;border:2px solid #fff}
+  .tl-now .nl{position:absolute;left:4px;top:-9px;background:#1E4E58;color:#fff;border-radius:4px;padding:1px 5px;font-size:9px;font-family:'Sora',monospace;font-weight:600;white-space:nowrap}
+
+  .ptlist{flex:1;display:flex;flex-direction:column}
+  .ptrow{height:74px;display:flex;align-items:center;padding-bottom:10px}
+  .ptcard{background:#FFFFFF;border-radius:12px;padding:0 16px;border:1px solid #E6EDF0;box-shadow:0 1px 3px rgba(19,64,74,.03);display:flex;align-items:center;gap:13px;flex:1;height:64px}
+  .ptcard.clickable{cursor:pointer;transition:transform .12s ease,box-shadow .12s ease}
+  .ptcard.clickable:hover{transform:translateY(-1px);box-shadow:0 6px 18px rgba(19,64,74,.08)}
+  .ptcard .tipo{width:34px;height:34px;border-radius:9px;background:#F2F6F8;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#1E4E58}
+  .ptcard .nm{font-weight:600;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .ptcard .q{font-size:11px;color:#697275;margin-top:2px}
+  .ptcard .meta{font-size:10px;color:#A2ABAE;margin-top:2px}
+  .badge{padding:4px 11px;border-radius:20px;font-size:10px;font-weight:600;white-space:nowrap}
+  .selst{font-size:11px;border:1px solid #E6EDF0;border-radius:8px;padding:6px 9px;color:#697275;background:#FFFFFF;max-width:150px}
+  .mtime{text-align:center;min-width:42px;display:none}
+  .mtime .d{width:9px;height:9px;border-radius:50%;margin:0 auto 4px}
+  .mtime .t{font-size:11px;font-weight:600;color:#1E4E58;font-family:'Sora',monospace}
+
+  .row{display:flex;gap:14px;margin-bottom:14px}
+  .video{flex:1;border-radius:16px;background:linear-gradient(160deg,#2C6470,#1E4E58);min-height:340px;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center}
+  .video .ph{text-align:center;color:rgba(255,255,255,.55)}
+  .video .ph svg{margin:0 auto;stroke:rgba(255,255,255,.5)}
+  .video .ph .t{font-size:13px;margin-top:10px;color:rgba(255,255,255,.6)}
+  .video .tmr{position:absolute;top:13px;left:13px;background:rgba(0,0,0,.3);color:#fff;padding:5px 12px;border-radius:20px;font-size:12px;font-family:'Sora',monospace;display:flex;align-items:center;gap:6px}
+  .video .tmr .d{width:6px;height:6px;border-radius:50%;background:#C99746;animation:pulse 1s infinite}
+  .video .pip{position:absolute;bottom:13px;right:13px;width:92px;height:70px;background:rgba(255,255,255,.12);border-radius:11px;border:1.5px solid rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.7)}
+  .panel{display:flex;flex-direction:column;gap:12px;width:212px}
+  .pblk{background:#FFFFFF;border-radius:12px;padding:15px;border:1px solid #E6EDF0;box-shadow:0 1px 3px rgba(19,64,74,.03)}
+  .ptt{font-size:10px;color:#A2ABAE;font-weight:600;letter-spacing:1.4px;text-transform:uppercase;margin-bottom:12px}
+  .ctrls{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+  .ctrls button{padding:11px 6px;border-radius:10px;border:1px solid #E6EDF0;background:#FFFFFF;display:flex;flex-direction:column;align-items:center;gap:5px;color:#697275}
+  .ctrls button.on{border-color:#6FA08C;background:#EDF4F1;color:#558776}
+  .ctrls button.off{border-color:#D8504E;background:#FBE9E8;color:#D8504E}
+  .ctrls button .l{font-size:9px;font-weight:600}
+  .info .kv{margin-bottom:10px}
+  .info .k{font-size:9px;color:#A2ABAE;text-transform:uppercase;letter-spacing:.8px}
+  .info .v{font-size:12px;font-weight:500;margin-top:1px}
+  .callbtn{padding:13px;border-radius:11px;border:none;font-weight:600;font-size:13px;background:#1E4E58;color:#fff;font-family:'Sora';display:flex;align-items:center;justify-content:center;gap:8px}
+  .callbtn.live{background:#D8504E}
+  .whats{background:#EDF4F1;border:1px solid #CFE0D8;border-radius:12px;padding:13px 15px;display:flex;gap:11px;align-items:flex-start}
+  .whats .wc{color:#558776;flex-shrink:0;margin-top:1px}
+  .whats .t{font-size:12px;font-weight:600;color:#558776}
+  .whats .s{font-size:11px;color:#5C7A6C;margin-top:2px}
+
+  .sessionbar{margin-top:16px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:12px 14px;border:1px solid #E6EDF0;border-radius:12px;background:#FFFFFF}
+  .sessionbar .left{display:flex;align-items:center;gap:9px}
+  .sessionbar .hint{font-size:11px;color:#697275}
+  .sessionbtn{padding:10px 16px;border:none;border-radius:10px;background:#1E4E58;color:#fff;font-size:12px;font-weight:600;font-family:'Sora';display:flex;align-items:center;gap:6px}
+  .sessionbtn.live{background:#D8504E}
+  .timerpill{padding:7px 11px;border:1px solid #E6EDF0;border-radius:999px;background:#F4F8FA;color:#13404A;font-size:12px;font-family:'Sora',monospace;display:flex;align-items:center;gap:6px}
+  .timerpill .dot{width:7px;height:7px;border-radius:50%;background:#2E9E5B}
+  .consult-head{margin-top:12px;display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+  .head-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .headbtn{padding:8px 12px;border:1px solid #E6EDF0;border-radius:9px;background:#FFFFFF;color:#566066;font-size:11px;font-weight:600;display:flex;align-items:center;gap:6px}
+  .headbtn.primary{background:#1E4E58;border-color:#1E4E58;color:#fff}
+  .headbtn.primary svg{stroke:#fff}
+
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
+  .ahead{padding:14px 15px;border-bottom:1px solid #E6EDF0;display:flex;align-items:center;justify-content:space-between}
+  .ahead .tt{font-size:12px;font-weight:600;color:#13404A;display:flex;align-items:center;gap:7px}
+  .ahead .ds{font-size:10px;color:#A2ABAE;margin-top:3px}
+  .recbtn{padding:8px 14px;border-radius:9px;border:none;font-weight:600;font-size:11px;background:#1E4E58;color:#fff;font-family:'Sora';display:flex;align-items:center;gap:6px}
+  .recbtn.rec{background:#D8504E}
+  .recbtn svg{stroke:#fff}
+  .scroll{height:224px;overflow-y:auto;padding:12px 14px;display:flex;flex-direction:column;gap:10px}
+  .empty{text-align:center;color:#A2ABAE;padding-top:64px;font-size:12px}
+  .line{display:flex;gap:9px}
+  .line .av{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;flex-shrink:0}
+  .line .av.dr{background:#1E4E58;color:#fff}
+  .line .av.pa{background:#F2F6F8;color:#697275}
+  .line .bub{background:#F2F6F8;border-radius:3px 11px 11px 11px;padding:8px 12px;flex:1}
+  .line .sp{font-size:9px;color:#A2ABAE;font-weight:600;margin-bottom:2px}
+  .line .tx{font-size:12px;line-height:1.5}
+  .typing{display:flex;gap:4px;padding-left:37px}
+  .typing .d{width:6px;height:6px;border-radius:50%;background:#6FA08C;opacity:.6;animation:bounce 1s infinite}
+  .anam .sec{border-left:2px solid #C99746;padding-left:12px;margin-bottom:13px}
+  .anam .sec .t{font-size:9px;color:#B07F34;font-weight:700;text-transform:uppercase;letter-spacing:.8px}
+  .anam .sec .v{font-size:12px;margin-top:3px;line-height:1.5}
+  .docbtns{display:flex;gap:9px;flex-wrap:wrap;margin-bottom:14px}
+  .docbtns button{padding:9px 14px;border-radius:9px;border:1px solid #E6EDF0;background:#FFFFFF;font-size:12px;color:#697275;display:flex;align-items:center;gap:7px}
+  .docbtns button svg{color:#A2ABAE}
+  .docbtns button.on{border-color:#1E4E58;background:#EDF4F1;color:#1E4E58;font-weight:600}
+  .docbtns button.on svg{color:#1E4E58}
+  .docarea textarea{width:100%;min-height:96px;padding:12px 14px;border:1px solid #E6EDF0;border-radius:10px;font-size:12px;line-height:1.6;resize:vertical;background:#F2F6F8;color:#33393B;font-family:'Inter'}
+  .docactions{display:flex;gap:9px;margin-top:11px;justify-content:flex-end;flex-wrap:wrap}
+  .docactions button{padding:9px 16px;border-radius:9px;font-size:12px;display:flex;align-items:center;gap:6px;font-weight:600}
+  .docactions .pr{border:1px solid #E6EDF0;background:#FFFFFF;color:#697275}
+  .docactions .gen{border:none;background:#C99746;color:#fff;font-family:'Sora'}
+  .docactions .gen svg{stroke:#fff}
+  .docactions .gen:disabled{opacity:.6;cursor:default}
+  .docactions .wa{border:none;background:#2E9E5B;color:#fff;font-family:'Sora'}
+  .docactions .wa svg{stroke:#fff}
+  .docactions .em{border:none;background:#1E4E58;color:#fff;font-family:'Sora'}
+  .docactions .em svg{stroke:#fff}
+  .surgnote{font-size:11px;color:#B07F34;margin-bottom:8px;font-weight:600;display:flex;align-items:center;gap:6px}
+
+  .form{display:flex;flex-direction:column;gap:15px}
+  .frow{display:grid;grid-template-columns:1fr 1fr;gap:15px}
+  .lbl{font-size:10px;color:#697275;font-weight:600;display:block;margin-bottom:6px;text-transform:uppercase;letter-spacing:.8px}
+  .inp{width:100%;padding:11px 13px;border:1px solid #E6EDF0;border-radius:10px;font-size:13px;color:#33393B;background:#FFFFFF}
+  .note{margin-top:18px;padding:13px 15px;background:#EDF4F1;border-radius:10px;border:1px solid #CFE0D8;display:flex;gap:11px;align-items:flex-start;font-size:11px;color:#5C7A6C;line-height:1.6}
+  .note svg{color:#558776;flex-shrink:0;margin-top:1px}
+  .submit{margin-top:16px;width:100%;padding:14px;border-radius:11px;border:none;font-weight:600;font-size:13px;background:#1E4E58;color:#fff;font-family:'Sora'}
+  .okmsg{background:#EDF4F1;border:1px solid #CFE0D8;border-radius:12px;padding:14px 16px;margin-bottom:16px;display:flex;gap:11px;align-items:center}
+  .okmsg svg{color:#558776}
+  .okmsg .t{font-weight:600;color:#558776;font-size:13px}
+  .okmsg .s{font-size:11px;color:#5C7A6C;margin-top:1px}
+
+  .rebook{margin-top:14px}
+  .rebook .head{padding:14px 15px;border-bottom:1px solid #E6EDF0;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+  .rebook .head .tt{font-size:12px;font-weight:600;color:#13404A;display:flex;align-items:center;gap:7px}
+  .rebook .head .ds{font-size:10px;color:#A2ABAE;margin-top:3px}
+  .rebook .body{padding:14px 15px}
+  .rebook .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .rebook .hint{font-size:11px;color:#697275;margin-top:10px}
+  .rebook .cta{margin-top:12px;display:flex;justify-content:flex-end}
+  .rebook .cta button{padding:10px 14px;border:none;border-radius:10px;background:#1E4E58;color:#fff;font-size:12px;font-weight:600;font-family:'Sora';display:flex;align-items:center;gap:6px}
+  .rebook .cta button:disabled{opacity:.6;cursor:default}
+
+  .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:18px}
+  .stat{background:#FFFFFF;border-radius:12px;padding:18px 16px;border:1px solid #E6EDF0;box-shadow:0 1px 3px rgba(19,64,74,.03);border-top:2px solid #1E4E58}
+  .stat .si{width:36px;height:36px;border-radius:10px;background:#F2F6F8;display:flex;align-items:center;justify-content:center;margin-bottom:11px;color:#1E4E58}
+  .stat .v{font-family:'Sora',sans-serif;font-size:23px;font-weight:700;letter-spacing:-.5px;color:#13404A}
+  .stat .l{font-size:11px;color:#697275;font-weight:600;margin-top:4px}
+  .stat .s{font-size:10px;color:#A2ABAE;margin-top:2px}
+  .bars .b{margin-bottom:12px}
+  .bars .bt{display:flex;justify-content:space-between;margin-bottom:5px;font-size:12px;color:#697275}
+  .bars .bt .v{font-weight:600;color:#33393B}
+  .bars .track{height:7px;background:#F2F6F8;border-radius:7px}
+  .bars .fill{height:100%;border-radius:7px}
+
+  /* week / month grids */
+  .weekgrid{display:grid;grid-template-columns:repeat(7,1fr);gap:8px;margin-top:18px}
+  .wkcol{background:#FFFFFF;border:1px solid #E6EDF0;border-radius:12px;overflow:hidden;min-height:240px}
+  .wkcol .wh{padding:10px 8px;text-align:center;border-bottom:1px solid #E6EDF0;background:#F4F8FA}
+  .wkcol .wh .wd{font-size:10px;color:#A2ABAE;text-transform:uppercase;letter-spacing:.6px}
+  .wkcol .wh .wn{font-family:'Sora';font-size:16px;font-weight:700;color:#13404A;margin-top:2px}
+  .wkcol .wh.today .wn{color:#fff;background:#1E4E58;border-radius:8px;width:30px;height:30px;line-height:30px;margin:2px auto 0}
+  .wkbody{padding:7px 6px;display:flex;flex-direction:column;gap:5px}
+  .wkev{border-radius:7px;padding:5px 7px;font-size:10px;line-height:1.3;border-left:3px solid #ccc}
+  .wkev .t{font-weight:700;font-family:'Sora'}
+  .wkev .n{color:#697275;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .monthgrid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-top:18px}
+  .mh{text-align:center;font-size:10px;color:#A2ABAE;text-transform:uppercase;letter-spacing:.6px;padding-bottom:4px}
+  .mcell{background:#FFFFFF;border:1px solid #E6EDF0;border-radius:9px;min-height:74px;padding:6px 7px;position:relative}
+  .mcell.out{background:#F8FAFB;opacity:.5}
+  .mcell.today{border-color:#1E4E58;box-shadow:0 0 0 1px #1E4E58 inset}
+  .mcell .dn{font-size:11px;font-weight:600;color:#33393B}
+  .mcell.today .dn{color:#1E4E58}
+  .mdots{display:flex;gap:3px;flex-wrap:wrap;margin-top:5px}
+  .mdots .d{width:6px;height:6px;border-radius:50%}
+  .mcount{position:absolute;bottom:6px;right:7px;font-size:9px;color:#A2ABAE}
+
+  @media(max-width:767px){
+    .sidebar{display:none}.mhead{display:flex}.bnav{display:flex}
+    .main{padding:66px 14px 76px}.topbar{display:none}.h2{font-size:19px}
+    .timeline{display:none}.ptrow{height:auto;padding-bottom:9px}.ptcard{height:auto;padding:13px 14px}.mtime{display:block}
+    .ptcard .tipo{display:none}.ptcard .badge.desk{display:none}
+    .row{flex-direction:column}.video{min-height:200px}
+    .panel{width:100%}.info{display:none}.grid2{grid-template-columns:1fr}
+    .frow{grid-template-columns:1fr}.stats{grid-template-columns:1fr 1fr}
+    .rebook .grid{grid-template-columns:1fr}
+    .weekgrid{grid-template-columns:1fr;gap:6px}.wkcol{min-height:auto}
+    .monthgrid{gap:3px}.mcell{min-height:54px;padding:4px}.mcell .dn{font-size:10px}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="sb-head">
+      <div class="logo"><div class="ic"><svg viewBox="0 0 64 64"><path d="M44 20a16 16 0 1 0 0 24" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round"/><line x1="44" y1="26" x2="44" y2="38" stroke="#C99746" stroke-width="4.5" stroke-linecap="round"/><line x1="38" y1="32" x2="50" y2="32" stroke="#9FD3BE" stroke-width="4.5" stroke-linecap="round"/></svg></div><div><div class="nm"><span class="orto">ORTOP</span><span class="gu">GU</span><span class="ia"><span class="i-dot">I</span>A</span></div><div class="sb">Saúde Digital</div></div></div>
+      <div class="sb-tag">Atendimento ortopédico inicial guiado por inteligência artificial.<br><span style="color:#1E4E58;font-weight:600">ortoguia.com.br</span></div>
+    </div>
+    <nav class="sb-nav" id="sbnav"></nav>
+    <div class="sb-foot"><div class="av" id="sb-avatar">TL</div><div style="flex:1;min-width:0"><div class="dn" id="sb-name">Thiago Lima</div><div class="dr" id="sb-email">thiagolima@ortopguia.com.br</div></div><a href="index.html" title="Sair" style="margin-left:auto;color:#A2ABAE;display:flex;align-items:center;padding:6px;border-radius:8px" onmouseover="this.style.background='#EEF3F5';this.style.color='#1E4E58'" onmouseout="this.style.background='transparent';this.style.color='#A2ABAE'"><svg class="ico-sm" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg></a></div>
+  </aside>
+  <header class="mhead">
+    <div class="logo"><div class="ic"><svg viewBox="0 0 64 64"><path d="M44 20a16 16 0 1 0 0 24" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round"/><line x1="44" y1="26" x2="44" y2="38" stroke="#C99746" stroke-width="4.5" stroke-linecap="round"/><line x1="38" y1="32" x2="50" y2="32" stroke="#9FD3BE" stroke-width="4.5" stroke-linecap="round"/></svg></div><div><div class="nm"><span class="orto">ORTOP</span><span class="gu">GU</span><span class="ia"><span class="i-dot">I</span>A</span></div><div class="sb">Saúde Digital</div></div></div>
+    <div class="onl"><div class="d"></div><span>Online</span></div>
+  </header>
+  <main class="main">
+    <div class="topbar">
+      <div style="display:flex;gap:8px">
+        <div class="pill"><svg class="ico-sm" viewBox="0 0 64 64"><path d="M44 20a16 16 0 1 0 0 24" fill="none" stroke="#1E4E58" stroke-width="5" stroke-linecap="round"/><line x1="44" y1="26" x2="44" y2="38" stroke="#C99746" stroke-width="4.5" stroke-linecap="round"/><line x1="38" y1="32" x2="50" y2="32" stroke="#6FA08C" stroke-width="4.5" stroke-linecap="round"/></svg>ortoguia.com.br</div>
+        <div class="pill"><svg class="ico-sm" viewBox="0 0 24 24"><path d="M12 21s-6-5.7-6-10a6 6 0 0 1 12 0c0 4.3-6 10-6 10z"/><circle cx="12" cy="11" r="2"/></svg>Clínica Central — São Paulo/SP</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:7px"><div style="width:8px;height:8px;border-radius:50%;background:#2E9E5B"></div><span style="font-size:11px;color:#697275;font-weight:500">Sistema Online</span></div>
+    </div>
+    <div id="view"></div>
+  </main>
+  <nav class="bnav" id="bnav"></nav>
+</div>
+<script>
+var IC={
+  agenda:'<rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/>',
+  teleconsulta:'<rect x="2" y="6" width="13" height="12" rx="2"/><path d="M15 10l6-3v10l-6-3"/>',
+  presencial:'<path d="M3 21V8l9-5 9 5v13"/><path d="M9 21v-6h6v6"/>',
+  agendamento:'<circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/>',
+  relatorios:'<path d="M3 3v18h18"/><rect x="7" y="11" width="3" height="6"/><rect x="13" y="7" width="3" height="10"/>',
+  assistentes:'<path d="M4 12a8 8 0 1 1 16 0"/><path d="M8 15h8"/><path d="M9 19h6"/><circle cx="9" cy="11" r="1"/><circle cx="15" cy="11" r="1"/>',
+  mic:'<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/>',
+  micOff:'<path d="M9 9v2a3 3 0 0 0 5 2M15 11V6a3 3 0 0 0-6 0M5 11a7 7 0 0 0 11 5M12 18v3M3 3l18 18"/>',
+  cam:'<rect x="2" y="6" width="13" height="12" rx="2"/><path d="M15 10l6-3v10l-6-3"/>',
+  camOff:'<path d="M2 8a2 2 0 0 1 2-2h7M15 10l6-3v10M15 15v1a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8M3 3l18 18"/>',
+  chat:'<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>',
+  rec:'<polygon points="6 4 20 12 6 20 6 4"/>',
+  stop:'<rect x="6" y="6" width="12" height="12" rx="2"/>',
+  pill:'<rect x="3" y="9" width="18" height="6" rx="3" transform="rotate(45 12 12)"/><path d="M8.5 8.5l7 7"/>',
+  file:'<path d="M14 2v6h6"/><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M8 13h8M8 17h5"/>',
+  clipboard:'<rect x="8" y="3" width="8" height="4" rx="1"/><path d="M16 5h2a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h2"/><path d="M8 11h8M8 15h6"/>',
+  flask:'<path d="M9 3h6M10 3v6l-5 9a2 2 0 0 0 2 3h10a2 2 0 0 0 2-3l-5-9V3"/><path d="M7 15h10"/>',
+  hospital:'<path d="M3 21V8l9-5 9 5v13"/><path d="M9 21v-6h6v6"/><path d="M12 8v4M10 10h4"/>',
+  transcript:'<path d="M4 6h16M4 10h16M4 14h10M4 18h13"/>',
+  notes:'<path d="M14 2v6h6"/><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M9 13l2 2 4-4"/>',
+  docs:'<path d="M14 2v6h6"/><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>',
+  print:'<path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/>',
+  check:'<path d="M20 6L9 17l-5-5"/>',
+  whatsapp:'<path d="M21 11.5a8.5 8.5 0 0 1-12.5 7.5L3 21l2-5.5A8.5 8.5 0 1 1 21 11.5z"/><path d="M8.5 9.5c0 3 2 5 5 5"/>',
+  mail:'<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/>',
+  clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+  star:'<path d="M12 2l2.9 6.3 6.9.6-5.2 4.5 1.6 6.7L12 17l-6.2 3.6 1.6-6.7L2.2 9.4l6.9-.6z"/>',
+  alert:'<path d="M12 9v4M12 17h.01"/><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/>',
+  lembretes:'<path d="M15 17h5l-1.4-1.4A2 2 0 0 1 18 14.2V11a6 6 0 1 0-12 0v3.2a2 2 0 0 1-.6 1.4L4 17h5"/><path d="M10 17a2 2 0 0 0 4 0"/>',
+  user:'<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>',
+  lgpd:'<path d="M12 2l8 4v6c0 5-3.5 8-8 10-4.5-2-8-5-8-10V6z"/><path d="M9 12l2 2 4-4"/>',
+  download:'<path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M4 21h16"/>',
+  trash:'<path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 10v7M14 10v7"/>'
+};
+function svg(name,cls){return '<svg class="'+(cls||'ico')+'" viewBox="0 0 24 24">'+IC[name]+'</svg>'}
+
+var PATIENTS=[
+{id:1,name:"Carlos Eduardo Silva",cpf:"123.456.789-00",plano:"Amil 400",queixa:"Dor no joelho direito",tipo:"presencial",status:"aguardando",hora:"08:00",esp:"Ortopedia",aniversario:"1988-11-24",medicacao:"Ibuprofeno 600mg às 08:00 e 20:00",consultasPrevias:3},
+{id:2,name:"Maria Aparecida Costa",cpf:"987.654.321-00",plano:"Amil S450",queixa:"Febre e dor de garganta",tipo:"teleconsulta",status:"em_atendimento",hora:"08:30",esp:"Clínica Geral",aniversario:"1991-06-03",medicacao:"Paracetamol 750mg se febre",consultasPrevias:1},
+{id:3,name:"João Paulo Ferreira",cpf:"456.789.123-00",plano:"Amil 700",queixa:"Consulta de retorno",tipo:"presencial",status:"atendido",hora:"09:00",esp:"Cardiologia",aniversario:"1979-12-17",medicacao:"Losartana 50mg diária",consultasPrevias:2},
+{id:4,name:"Ana Beatriz Souza",cpf:"321.654.987-00",plano:"Amil S250",queixa:"Pressão alta",tipo:"teleconsulta",status:"aguardando",hora:"09:30",esp:"Clínica Geral",aniversario:"1986-08-09",medicacao:"Anlodipino 5mg às 07:00",consultasPrevias:4},
+{id:5,name:"Roberto Mendes Lima",cpf:"654.321.098-00",plano:"Amil 400",queixa:"Ferimentos extensos em perna após queda",tipo:"presencial",status:"aguardando",hora:"10:00",esp:"Ortopedia",aniversario:"1974-05-30",medicacao:"Curativo e antibiótico conforme prescrição",consultasPrevias:1},
+{id:6,name:"Fernanda Oliveira",cpf:"789.012.345-00",plano:"Amil 700",queixa:"Piora clínica da dor lombar",tipo:"presencial",status:"atendido",hora:"10:30",esp:"Clínica Geral",aniversario:"1995-05-31",medicacao:"Naproxeno 500mg 12/12h",consultasPrevias:3}
+];
+var TRANSCRIPT=[
+{sp:"Médico",tx:"Bom dia! Como o senhor está se sentindo hoje?"},
+{sp:"Paciente",tx:"Bom dia doutor. Estou com uma dor forte no joelho direito há uns 3 dias."},
+{sp:"Médico",tx:"A dor é constante ou piora com movimento?"},
+{sp:"Paciente",tx:"Piora bastante quando eu dobro o joelho ou desço escadas."},
+{sp:"Médico",tx:"Houve algum trauma, queda ou torção recentemente?"},
+{sp:"Paciente",tx:"Não, surgiu do nada. Mas pratico futebol aos fins de semana."},
+{sp:"Médico",tx:"Entendido. Vou examinar a articulação. Sente dor aqui na linha articular?"}
+];
+var NAV_MED=[
+{id:"agenda",l:"Agenda",ml:"Agenda"},
+{id:"teleconsulta",l:"Teleconsulta",ml:"Tele"},
+{id:"presencial",l:"Cons. Presencial",ml:"Presencial"},
+{id:"assistentes",l:"Assistentes",ml:"Assist."},
+{id:"relatorios",l:"Relatórios",ml:"Relatórios"},
+{id:"lgpd",l:"LGPD",ml:"LGPD"}
+];
+var NAV_SEC=[
+{id:"agenda",l:"Agenda",ml:"Agenda"},
+{id:"agendamento",l:"Cadastro Paciente",ml:"Cadastro"},
+{id:"lembretes",l:"Lembretes",ml:"Lembretes"}
+];
+var ROLE_ALLOWED_TABS={
+  medico:["agenda","teleconsulta","presencial","assistentes","relatorios","lgpd"],
+  secretaria:["agenda","agendamento","lembretes"],
+  paciente:["agenda"]
+};
+var LGPD_DEFAULT_RETENTION_DAYS=365;
+var PATIENT_STORAGE_KEY="ortopguia:patients";
+function canAccessTab(tab){
+  var s=getSession()||{};
+  var role=s.role||"paciente";
+  return (ROLE_ALLOWED_TABS[role]||[]).indexOf(tab)!==-1;
+}
+function normalizePatient(p){
+  var c=Object.assign({},p||{});
+  if(!c.createdAt)c.createdAt=new Date().toISOString();
+  if(!c.updatedAt)c.updatedAt=c.createdAt;
+  if(!c.retentionUntil)c.retentionUntil=new Date(Date.parse(c.updatedAt)+LGPD_DEFAULT_RETENTION_DAYS*24*60*60*1000).toISOString();
+  return c;
+}
+function loadPatients(){
+  try{
+    var raw=localStorage.getItem(PATIENT_STORAGE_KEY);
+    if(raw){
+      var arr=JSON.parse(raw);
+      if(Array.isArray(arr)&&arr.length)return arr.map(normalizePatient);
+    }
+  }catch(e){}
+  return JSON.parse(JSON.stringify(PATIENTS)).map(normalizePatient);
+}
+function savePatients(){
+  try{localStorage.setItem(PATIENT_STORAGE_KEY,JSON.stringify(state.patients.map(normalizePatient)))}catch(e){}
+}
+function touchPatient(pt){
+  if(!pt)return;
+  pt.updatedAt=new Date().toISOString();
+  pt.retentionUntil=new Date(Date.parse(pt.updatedAt)+LGPD_DEFAULT_RETENTION_DAYS*24*60*60*1000).toISOString();
+}
+function getSession(){
+  try{return JSON.parse(localStorage.getItem("ortopguia:session")||"null")}catch(e){return null}
+}
+function sessionIsValid(s){
+  if(!s||!s.email||!s.role)return false;
+  if(!s.lgpdAccepted)return false;
+  if(!s.expiresAt)return false;
+  if((s.role==="medico"||s.role==="secretaria")&&!s.accessToken)return false;
+  var exp=Date.parse(s.expiresAt);
+  if(!isFinite(exp))return false;
+  return Date.now()<exp;
+}
+function requireValidSession(){
+  var s=getSession();
+  if(!sessionIsValid(s)){
+    try{localStorage.removeItem("ortopguia:session")}catch(e){}
+    window.location.href="index.html";
+    return false;
+  }
+  return true;
+}
+function auditLog(action,meta,outcome){
+  try{
+    var s=getSession()||{};
+    var arr=JSON.parse(localStorage.getItem("ortopguia:audit")||"[]");
+    var nowIso=new Date().toISOString();
+    arr.push({
+      at:nowIso,
+      email:s.email||"",
+      role:s.role||"",
+      sessionId:s.sid||"",
+      tab:state&&state.tab?state.tab:"",
+      action:action,
+      outcome:outcome||"ok",
+      meta:meta||{},
+      retentionUntil:new Date(Date.parse(nowIso)+LGPD_DEFAULT_RETENTION_DAYS*24*60*60*1000).toISOString()
+    });
+    if(arr.length>1000)arr=arr.slice(arr.length-1000);
+    localStorage.setItem("ortopguia:audit",JSON.stringify(arr));
+  }catch(e){}
+}
+function roleIsSecretaria(){
+  var s=getSession();
+  return !!(s&&s.role==="secretaria");
+}
+function navForRole(){return roleIsSecretaria()?NAV_SEC:NAV_MED}
+function statusCfg(s){
+if(s==="aguardando")return{bg:"#E8F6EE",tx:"#2E9E5B",dot:"#2E9E5B",l:"Em Espera"};
+if(s==="em_atendimento")return{bg:"#FBF2D9",tx:"#9A7308",dot:"#D9A218",l:"Em Atendimento"};
+return{bg:"#FBE9E8",tx:"#C23C3A",dot:"#D8504E",l:"Atendido"};
+}
+function esc(s){return(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")}
+function pad2(n){return String(n).padStart(2,"0")}
+function todayIso(){var d=new Date();return d.getFullYear()+"-"+pad2(d.getMonth()+1)+"-"+pad2(d.getDate())}
+function fmtDateBR(iso){if(!iso)return "";var p=iso.split("-");if(p.length!==3)return iso;return p[2]+"/"+p[1]}
+function fmtClockSec(s){return String(Math.floor(s/60)).padStart(2,"0")+":"+String(s%60).padStart(2,"0")}
+function getPatientDate(pt){return pt.data||todayIso()}
+function patientInitials(name){return (String(name||"").split(" ").map(function(x){return x[0]||""}).join("").slice(0,2)||"PA").toUpperCase()}
+function selectedPatientForMode(mode){
+  var pid=state.activePatientId;
+  var fallback=state.patients.filter(function(p){return p.tipo===mode})[0]||state.patients[0]||null;
+  if(!pid)return fallback;
+  var chosen=getPatientById(pid);
+  if(chosen&&chosen.tipo===mode)return chosen;
+  return fallback;
+}
+function telePatient(){
+  var pt=selectedPatientForMode("teleconsulta")||{};
+  return {nome:pt.name||"Paciente",telefone:(pt.telefone||"5511999999999").replace(/\D/g,""),agendaAt:pt.hora||"a confirmar"}
+}
+function allTimeSlots(){
+  var out=[];
+  for(var h=8;h<=18;h++){
+    out.push(pad2(h)+":00");
+    if(h<18)out.push(pad2(h)+":30");
+  }
+  return out;
+}
+function getFreeSlots(dateIso,excludePatientId){
+  var occ={};
+  state.patients.forEach(function(pt){
+    if(pt.id!==excludePatientId && getPatientDate(pt)===dateIso && pt.hora){occ[pt.hora]=true}
+  });
+  return allTimeSlots().filter(function(h){return !occ[h]});
+}
+function getPatientById(id){return state.patients.filter(function(p){return p.id===id})[0]||null}
+function modePatientId(mode){
+  var m=mode==="tele"?"teleconsulta":"presencial";
+  var pt=selectedPatientForMode(m);
+  return pt?pt.id:null;
+}
+function ensureRebookTime(mode){
+  var pid=modePatientId(mode);
+  var rb=state.rebook[mode];
+  var free=getFreeSlots(rb.date,pid);
+  if(free.indexOf(rb.time)===-1){rb.time=free[0]||""}
+}
+function setRebookDate(mode,v){state.rebook[mode].date=v;ensureRebookTime(mode);render()}
+function setRebookTime(mode,v){state.rebook[mode].time=v}
+function saveRebook(mode){
+  if(roleIsSecretaria()){denyAction("rebook_denied_secretaria");return}
+  var pid=modePatientId(mode);
+  var rb=state.rebook[mode];
+  var pt=getPatientById(pid);
+  if(!pt||!rb.date||!rb.time)return;
+  var free=getFreeSlots(rb.date,pid);
+  if(free.indexOf(rb.time)===-1){alert("Horário indisponível. Escolha um horário livre.");ensureRebookTime(mode);render();return}
+  pt.data=rb.date;
+  pt.hora=rb.time;
+  touchPatient(pt);
+  savePatients();
+  auditLog("rebook_consultation",{mode:mode,patientId:pid,newDate:rb.date,newTime:rb.time});
+  alert("Reagendamento realizado para "+fmtDateBR(rb.date)+" às "+rb.time+".");
+  render();
+}
+function rebookWidget(mode){
+  var pid=modePatientId(mode);
+  var pt=getPatientById(pid);
+  var rb=state.rebook[mode];
+  var free=getFreeSlots(rb.date,pid);
+  var opts=free.map(function(h){return '<option value="'+h+'"'+(rb.time===h?" selected":"")+'>'+h+'</option>'}).join("");
+  if(!opts)opts='<option value="">Sem horários livres</option>';
+  return '<div class="card rebook"><div class="head"><div><div class="tt">'+svg("agenda","ico-sm")+'Reagendamento</div><div class="ds">Sem conflito com a agenda principal</div></div></div><div class="body"><div class="grid"><div><label class="lbl">Dia / Mês</label><input class="inp" type="date" value="'+rb.date+'" oninput="setRebookDate(\''+mode+'\',this.value)"></div><div><label class="lbl">Horários Livres</label><select class="inp" onchange="setRebookTime(\''+mode+'\',this.value)">'+opts+'</select></div></div><div class="hint">Paciente: '+esc(pt?pt.name:"")+' · '+free.length+' horário(s) livre(s) em '+fmtDateBR(rb.date)+'.</div><div class="cta"><button onclick="saveRebook(\''+mode+'\')"'+(free.length?"":" disabled")+'>'+svg("check","ico-sm")+'Confirmar Reagendamento</button></div></div></div>';
+}
+var DOCS=[
+{id:"prescricao",ic:"pill",l:"Prescrição",tmpl:"Ibuprofeno 600mg — 1 comp. 8/8h por 5 dias\nDiclofenaco gel 1% — Aplicar 2x/dia na região afetada"},
+{id:"atestado",ic:"file",l:"Atestado / Relatório",tmpl:"Atesto que o(a) paciente necessita de afastamento de suas atividades laborais pelo período de 3 dias a partir de hoje.\n\nRelatório: quadro álgico osteomuscular em investigação."},
+{id:"exames",ic:"flask",l:"Pedido de Exames",tmpl:"• Raio-X do joelho direito (AP e perfil)\n• Ressonância Magnética do joelho direito\n• Hemograma completo · PCR e VHS"},
+{id:"cirurgia",ic:"hospital",l:"Pedido Cirúrgico",tmpl:"Artroscopia diagnóstica e terapêutica — joelho direito\nCID: M23.2 · Dr. Rafael Martins CRM 54321\nAguardando confirmação do médico responsável"},
+{id:"terapias",ic:"notes",l:"Terapias",tmpl:"Objetivos terapêuticos:\n- Reduzir dor e inflamação\n- Recuperar mobilidade funcional\n\nPlano:\n- Fisioterapia motora 2x por semana por 6 semanas\n- Reavaliação clínica em 30 dias"}
+];
+var ANAM=[["Identificação","Carlos Eduardo Silva, 38 anos, futebol amador"],["Queixa Principal","Gonalgia direita há 3 dias"],["HDA","Início insidioso, sem trauma. Piora à flexão e descida de escadas."],["Antecedentes","Futebol fins de semana. Nega cirurgias prévias."],["Hipótese Diag.","Condropatia patelar / Síndrome do corredor / Lesão meniscal"]];
+
+var state={tab:"agenda",agView:"dia",patients:loadPatients(),activePatientId:null,repoByPatient:{},call:{on:false,t:0,mic:true,cam:true,iv:null},teleDoc:null,teleText:{},teleGen:{},pres:{lines:[],rec:false,doc:null,anam:false,anamData:null,docText:{},docGen:{},liveText:"",ctrl:null,iv:null,idx:0,active:false,t:0,tiv:null},teleTrans:{rec:false,liveText:"",ctrl:null,anam:false,anamData:null},teleSession:{active:false,t:0,tiv:null,roomId:"",joinUrl:"",waLink:"",captureSystemAudio:true},rebook:{tele:{date:todayIso(),time:""},pres:{date:todayIso(),time:""}},lgpd:{retentionDays:LGPD_DEFAULT_RETENTION_DAYS,expurged:0,lastPurgeAt:""},form:{nome:"",cpf:"",plano:"",queixa:"",tipo:"presencial",esp:"Clínica Geral",data:"",hora:"",ok:false}};
+ensureRebookTime("tele");
+ensureRebookTime("pres");
+
+// Liga/desliga IA real. Se o backend estiver no ar, USE_AI=true usa GPT/Whisper.
+// Se a chamada falhar, cai automaticamente no modo demonstração.
+var USE_AI = (typeof OrtoguIA !== "undefined");
+window.__ORTO_AI_READY = false;
+function aiReady(){ return typeof OrtoguIA !== "undefined" && window.__ORTO_AI_READY === true; }
+function ensureAiNow(onReady,onFail){
+  if(typeof OrtoguIA==="undefined"){if(onFail)onFail();return}
+  // Não bloqueia o fluxo por pre-check; tenta a chamada real imediatamente.
+  if(onReady)onReady();
+  if(!aiReady()){
+    OrtoguIA.ping(4000)
+      .then(function(ok){ if(ok){window.__ORTO_AI_READY=true;} })
+      .catch(function(){});
+  }
+}
+function cleanTranscriptText(t){
+  var s=(t||"").trim();
+  if(!s)return "";
+  if(s.indexOf("⚠")===0)return "";
+  return s;
+}
+function goAgenda(){state.tab="agenda";render()}
+function goLanding(){
+  auditLog("logout",{});
+  try{localStorage.removeItem("ortopguia:session")}catch(e){}
+  window.location.href="index.html"
+}
+function saveCurrentConsultation(){
+  if(roleIsSecretaria()){denyAction("save_consultation_denied_secretaria");return}
+  var payload={
+    at:new Date().toISOString(),
+    tab:state.tab,
+    tele:{transcricao:state.teleTrans.liveText||"",anamnese:state.teleTrans.anamData||null},
+    presencial:{transcricao:state.pres.liveText||"",anamnese:state.pres.anamData||null}
+  };
+  try{
+    localStorage.setItem("ortopguia:lastConsult",JSON.stringify(payload));
+    var mode=state.tab==="teleconsulta"?"teleconsulta":"presencial";
+    var pt=selectedPatientForMode(mode);
+    if(pt){
+      var resumo=mode==="teleconsulta"
+        ?("Transcrição: "+(state.teleTrans.liveText||"")+"\n\nAnamnese: "+JSON.stringify(state.teleTrans.anamData||{},null,2))
+        :("Transcrição: "+(state.pres.liveText||"")+"\n\nAnamnese: "+JSON.stringify(state.pres.anamData||{},null,2));
+      saveDocumentToCloud(pt,mode,"resumo_consulta","Resumo da consulta",resumo,{tab:state.tab});
+    }
+    auditLog("save_consultation",{tab:state.tab});
+    alert("Consulta salva com sucesso.");
+  }catch(e){
+    alert("Não foi possível salvar nesta sessão.");
+  }
+}
+function isRecoverableTranscribeError(msg){
+  var m=String(msg||"").toLowerCase();
+  return m.indexOf("invalid file format")!==-1 || (m.indexOf("400")!==-1 && m.indexOf("format")!==-1);
+}
+function presTranscriptText(){
+  var fromLive=cleanTranscriptText(state.pres.liveText||"");
+  if(fromLive)return fromLive;
+  var merged=(state.pres.lines||[])
+    .map(function(l){return (l&&l.tx)?String(l.tx):""})
+    .join(" ")
+    .trim();
+  return cleanTranscriptText(merged);
+}
+function teleTranscriptText(){
+  return cleanTranscriptText(state.teleTrans.liveText||"");
+}
+function fmtDateTimeBR(iso){
+  var d=iso?new Date(iso):new Date();
+  if(!d||!isFinite(d.getTime()))d=new Date();
+  return d.toLocaleString("pt-BR");
+}
+function doctorStampLabel(){
+  var s=getSession()||{};
+  var nome=s.name||"Médico Responsável";
+  return "Dr(a). "+nome+" · ORTOPGUIA";
+}
+function assistantSpecsText(docId,mode){
+  var map={
+    prescricao:"Sugestão terapêutica estruturada a partir da transcrição e dados clínicos.",
+    atestado:"Síntese clínica para afastamento/relato com linguagem técnica e objetiva.",
+    exames:"Recomendação de exames com base na hipótese clínica descrita.",
+    cirurgia:"Pré-estruturação de indicação cirúrgica para validação médica final.",
+    terapias:"Plano terapêutico com objetivos, frequência e critérios de seguimento."
+  };
+  return [
+    "Assistente: "+(mode==="tele"?"Assistente de Teleconsulta":"Assistente de Consulta Presencial"),
+    "Módulo: "+(map[docId]||"Geração de documento clínico assistido por IA"),
+    "Status: Finalizado"
+  ].join("\n");
+}
+function formatMedicalDocument(mode,docId,rawText,pt){
+  var nowIso=new Date().toISOString();
+  var doc=(DOCS.filter(function(d){return d.id===docId})[0]||{});
+  var docTitle=doc.l||"Documento Médico";
+  var patientName=(pt&&pt.name)?pt.name:"Paciente";
+  var patientPlan=(pt&&pt.plano)?pt.plano:"Não informado";
+  var body=(rawText||"").trim();
+  return [
+    "ORTOPGUIA — "+docTitle,
+    "Paciente: "+patientName,
+    "Plano de Saúde: "+patientPlan,
+    "",
+    "Especificações do Assistente",
+    assistantSpecsText(docId,mode),
+    "",
+    "Documento",
+    body||"Sem conteúdo.",
+    "",
+    "Data de Finalização: "+fmtDateTimeBR(nowIso),
+    "Carimbo Médico: "+doctorStampLabel(),
+    "Assinatura Eletrônica: PENDENTE DE IMPLEMENTAÇÃO"
+  ].join("\n");
+}
+function setAgView(v){state.agView=v;render()}
+function syncProfileUI(){
+  var s=getSession()||{name:"Thiago Lima",email:"thiagolima@ortopguia.com.br",role:"medico"};
+  var name=s.name||"Usuário";
+  var email=s.email||"";
+  var av=(name.split(" ").map(function(x){return x[0]||""}).join("").slice(0,2)||"US").toUpperCase();
+  var avEl=document.getElementById("sb-avatar");
+  var nmEl=document.getElementById("sb-name");
+  var emEl=document.getElementById("sb-email");
+  if(avEl)avEl.textContent=av;
+  if(nmEl)nmEl.textContent=name;
+  if(emEl)emEl.textContent=email;
+}
+function denyAction(action){
+  auditLog(action,{},"denied");
+  alert("Ação bloqueada para o seu perfil.");
+}
+function readAuditLogs(){
+  try{var arr=JSON.parse(localStorage.getItem("ortopguia:audit")||"[]");return Array.isArray(arr)?arr:[]}catch(e){return []}
+}
+function saveAuditLogs(arr){
+  try{localStorage.setItem("ortopguia:audit",JSON.stringify(arr||[]))}catch(e){}
+}
+function runRetentionNow(){
+  var days=Number(state.lgpd.retentionDays)||LGPD_DEFAULT_RETENTION_DAYS;
+  if(days<30)days=30;
+  state.lgpd.retentionDays=days;
+  var cutoff=Date.now()-days*24*60*60*1000;
+  var beforePatients=state.patients.length;
+  state.patients=state.patients.filter(function(p){
+    var ref=Date.parse(p.updatedAt||p.createdAt||new Date().toISOString());
+    return isFinite(ref)?ref>=cutoff:true;
+  });
+  var removedPatients=beforePatients-state.patients.length;
+  var logs=readAuditLogs();
+  var kept=logs.filter(function(l){
+    var at=Date.parse(l.at||"");
+    return isFinite(at)?at>=cutoff:true;
+  });
+  var removedLogs=logs.length-kept.length;
+  saveAuditLogs(kept);
+  savePatients();
+  state.lgpd.expurged=removedPatients+removedLogs;
+  state.lgpd.lastPurgeAt=new Date().toISOString();
+  auditLog("lgpd_retention_purge",{days:days,removedPatients:removedPatients,removedLogs:removedLogs});
+  render();
+}
+function setRetentionDays(v){
+  state.lgpd.retentionDays=Math.max(30,Number(v)||LGPD_DEFAULT_RETENTION_DAYS);
+}
+function exportPatientData(id){
+  if(!canAccessTab("lgpd")){denyAction("lgpd_export_patient_denied");return}
+  var pt=getPatientById(id);
+  if(!pt){alert("Paciente não encontrado.");return}
+  var payload={
+    exportedAt:new Date().toISOString(),
+    patient:pt,
+    consultations:JSON.parse(localStorage.getItem("ortopguia:lastConsult")||"null"),
+    audit:readAuditLogs().filter(function(l){return (l.meta&&String(l.meta.patientId||"")===String(id))||String(l.meta&&l.meta.patient||"").toLowerCase().indexOf(String(pt.name||"").toLowerCase())!==-1;})
+  };
+  var blob=new Blob([JSON.stringify(payload,null,2)],{type:"application/json;charset=utf-8"});
+  var a=document.createElement("a");
+  a.href=URL.createObjectURL(blob);
+  a.download="paciente-"+id+"-lgpd.json";
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(function(){URL.revokeObjectURL(a.href);a.remove();},0);
+  auditLog("lgpd_export_patient",{patientId:id,patient:pt.name});
+}
+function deletePatientData(id){
+  if(!canAccessTab("lgpd")){denyAction("lgpd_delete_patient_denied");return}
+  var pt=getPatientById(id);
+  if(!pt){alert("Paciente não encontrado.");return}
+  if(!confirm("Confirma a eliminação dos dados de "+pt.name+"? Esta ação não pode ser desfeita."))return;
+  state.patients=state.patients.filter(function(p){return p.id!==id});
+  savePatients();
+  auditLog("lgpd_delete_patient",{patientId:id,patient:pt.name});
+  render();
+}
+function agendaOpenPatient(id){
+  if(roleIsSecretaria()){denyAction("agenda_open_consultation_denied_secretaria");return}
+  var pt=getPatientById(id);
+  if(!pt)return;
+  state.activePatientId=id;
+  state.tab=pt.tipo==="teleconsulta"?"teleconsulta":"presencial";
+  loadPatientRepository(id);
+  auditLog("agenda_open_consultation",{patientId:id,mode:pt.tipo});
+  render();
+}
+function repositoryDocsForPatient(id){
+  return state.repoByPatient[String(id)]||[];
+}
+function loadPatientRepository(id){
+  if(!id||typeof OrtoguIA==="undefined"||!OrtoguIA.listarDocumentosProntuario)return;
+  OrtoguIA.listarDocumentosProntuario(id)
+    .then(function(docs){state.repoByPatient[String(id)]=Array.isArray(docs)?docs:[];render();})
+    .catch(function(){});
+}
+function saveDocumentToCloud(pt,mode,docType,title,content,metadata){
+  if(!pt||typeof OrtoguIA==="undefined"||!OrtoguIA.salvarDocumentoProntuario)return;
+  OrtoguIA.salvarDocumentoProntuario({
+    patientId:pt.id,
+    patientName:pt.name,
+    mode:mode,
+    docType:docType,
+    title:title,
+    content:content,
+    metadata:metadata||{}
+  }).then(function(saved){
+    var key=String(pt.id);
+    if(!state.repoByPatient[key])state.repoByPatient[key]=[];
+    state.repoByPatient[key].unshift(saved);
+    render();
+  }).catch(function(){});
+}
+function prontuarioWidget(mode){
+  var pt=selectedPatientForMode(mode==="tele"?"teleconsulta":"presencial");
+  if(!pt)return '<div class="card" style="margin-top:14px"><div class="ahead" style="display:block"><div class="tt">'+svg("clipboard","ico-sm")+'Prontuário</div><div class="ds">Sem paciente selecionado</div></div></div>';
+  var docs=repositoryDocsForPatient(pt.id).slice(0,12);
+  var rows=docs.map(function(d){
+    var at=(d.createdAt||"").replace("T"," ").slice(0,16);
+    return '<div class="line"><div class="av dr">'+esc((d.docType||"DOC").slice(0,2).toUpperCase())+'</div><div class="bub"><div class="sp">'+esc(d.title||d.docType||"Documento")+' · '+esc(at)+'</div><div class="tx">'+esc(String(d.content||"").slice(0,220) || "Sem conteúdo")+'</div></div></div>';
+  }).join("");
+  if(!rows)rows='<div class="empty" style="padding-top:26px">Nenhum documento em nuvem para este paciente.</div>';
+  return '<div class="card" style="margin-top:14px"><div class="ahead" style="display:block"><div class="tt">'+svg("clipboard","ico-sm")+'Prontuário do Paciente</div><div class="ds">Repositório em nuvem de documentos e registros</div></div><div class="scroll">'+rows+'</div></div>';
+}
+
+function renderNav(){
+var sb=document.getElementById("sbnav");sb.innerHTML="";
+var nav=navForRole();
+if(nav.map(function(n){return n.id}).indexOf(state.tab)===-1){state.tab=nav[0].id}
+nav.forEach(function(n){var b=document.createElement("button");b.className=state.tab===n.id?"on":"";b.innerHTML=svg(n.id,"ico")+'<span>'+n.l+'</span>';b.onclick=function(){state.tab=n.id;render()};sb.appendChild(b)});
+var bn=document.getElementById("bnav");bn.innerHTML="";
+nav.forEach(function(n){var b=document.createElement("button");b.className=state.tab===n.id?"on":"";b.innerHTML=svg(n.id,"ico")+'<span class="l">'+n.ml+'</span>';b.onclick=function(){state.tab=n.id;render()};bn.appendChild(b)});
+}
+function viewAgenda(){
+var p=state.patients;var counts={aguardando:0,em_atendimento:0,atendido:0};p.forEach(function(x){counts[x.status]++});
+var headActions='<div class="head-actions"><button class="headbtn" onclick="goLanding()">'+svg("check","ico-sm")+'Sair</button></div>';
+var tabs='<div class="vtabs">'
+  +'<button class="'+(state.agView==="dia"?"on":"")+'" onclick="setAgView(\x27dia\x27)">Dia</button>'
+  +'<button class="'+(state.agView==="semana"?"on":"")+'" onclick="setAgView(\x27semana\x27)">Semana</button>'
+  +'<button class="'+(state.agView==="mes"?"on":"")+'" onclick="setAgView(\x27mes\x27)">Mês</button>'
+  +'</div>';
+var legend='<div class="legend" style="margin-top:14px"><div class="it"><div class="dot" style="background:#2E9E5B"></div>Em Espera ('+counts.aguardando+')</div><div class="it"><div class="dot" style="background:#D9A218"></div>Em Atendimento ('+counts.em_atendimento+')</div><div class="it"><div class="dot" style="background:#D8504E"></div>Atendido ('+counts.atendido+')</div></div>';
+
+if(state.agView==="semana")return '<div><div class="consult-head"><div><div class="h2">Agenda · Semana</div><div class="sub">Visão semanal de consultas</div></div>'+headActions+'</div>'+tabs+legend+weekView()+'</div>';
+if(state.agView==="mes")return '<div><div class="consult-head"><div><div class="h2">Agenda · Mês</div><div class="sub">'+new Date().toLocaleDateString("pt-BR",{month:"long",year:"numeric"})+'</div></div>'+headActions+'</div>'+tabs+legend+monthView()+'</div>';
+
+// DAY view
+var dateStr=new Date().toLocaleDateString("pt-BR",{weekday:"long",year:"numeric",month:"long",day:"numeric"});
+var ROW=74;var now=new Date();var curMin=now.getHours()*60+now.getMinutes();
+var tlrows="";
+p.forEach(function(pt){var sc=statusCfg(pt.status);tlrows+='<div class="tl-row"><span class="hr">'+pt.hora+'</span><div class="dot" style="background:'+sc.dot+'"></div></div>'});
+var nowMark="";
+var firstHM=p[0].hora.split(":"),lastHM=p[p.length-1].hora.split(":");
+var firstMin=(+firstHM[0])*60+(+firstHM[1]),lastMin=(+lastHM[0])*60+(+lastHM[1]);
+if(curMin>=firstMin-45 && curMin<=lastMin+45){
+  var idx=0;
+  for(var k=0;k<p.length;k++){var hm=p[k].hora.split(":");var m=(+hm[0])*60+(+hm[1]);
+    if(curMin>=m){ if(k<p.length-1){var hm2=p[k+1].hora.split(":");var m2=(+hm2[0])*60+(+hm2[1]);idx=k+Math.min((curMin-m)/(m2-m||1),1);}else{idx=k;} }
+  }
+  if(curMin<firstMin)idx=0;
+  var topPx=idx*ROW+38;
+  var ts=String(now.getHours()).padStart(2,"0")+":"+String(now.getMinutes()).padStart(2,"0");
+  nowMark='<div class="tl-now" style="top:'+topPx+'px"><div class="nd"></div><div class="nl">'+ts+'</div></div>';
+}
+var cards="";p.forEach(function(pt){var sc=statusCfg(pt.status);var ti=pt.tipo==="teleconsulta"?svg("teleconsulta","ico"):svg("hospital","ico");var tl=pt.tipo==="teleconsulta"?"Teleconsulta":"Presencial";
+cards+='<div class="ptrow"><div class="ptcard clickable" onclick="agendaOpenPatient('+pt.id+')" style="border-left:3px solid '+sc.dot+'"><div class="mtime"><div class="d" style="background:'+sc.dot+'"></div><div class="t">'+pt.hora+'</div></div><div class="tipo">'+ti+'</div><div style="flex:1;min-width:0"><div class="nm">'+esc(pt.name)+'</div><div class="q">'+esc(pt.queixa)+' · '+pt.esp+'</div><div class="meta">'+pt.hora+' · '+tl+' · '+pt.plano+'</div></div><div style="display:flex;align-items:center;gap:9px;flex-shrink:0"><div class="badge desk" style="background:'+sc.bg+';color:'+sc.tx+'">'+sc.l+'</div><select class="selst" onclick="event.stopPropagation()" onchange="setStatus('+pt.id+',this.value)"><option value="aguardando"'+(pt.status==="aguardando"?" selected":"")+'>Em Espera</option><option value="em_atendimento"'+(pt.status==="em_atendimento"?" selected":"")+'>Em Atendimento</option><option value="atendido"'+(pt.status==="atendido"?" selected":"")+'>Atendido</option></select></div></div></div>'});
+return '<div><div class="consult-head"><div><div class="h2">Agenda do Dia</div><div class="sub">'+dateStr+'</div></div>'+headActions+'</div>'+tabs+legend+'<div class="agwrap"><div class="timeline"><div class="tl-vline"></div>'+tlrows+nowMark+'</div><div class="ptlist">'+cards+'</div></div></div>';
+}
+function weekView(){
+var dias=["Seg","Ter","Qua","Qui","Sex","Sáb","Dom"];
+var today=new Date().getDay();var todayIdx=today===0?6:today-1;
+var startD=new Date();startD.setDate(startD.getDate()-todayIdx);
+// distribute patients across weekdays deterministically
+var byDay=[[],[],[],[],[],[],[]];
+state.patients.forEach(function(pt,i){byDay[(i*2)%5].push(pt)});
+var cols="";
+for(var d=0;d<7;d++){
+  var dd=new Date(startD);dd.setDate(startD.getDate()+d);
+  var evs="";byDay[d].forEach(function(pt){var sc=statusCfg(pt.status);evs+='<div class="wkev" style="border-left-color:'+sc.dot+';background:'+sc.bg+'"><div class="t" style="color:'+sc.tx+'">'+pt.hora+'</div><div class="n">'+esc(pt.name.split(" ")[0]+" "+(pt.name.split(" ")[1]||""))+'</div></div>'});
+  if(d>4)evs=evs||'<div style="font-size:10px;color:#A2ABAE;text-align:center;padding-top:20px">—</div>';
+  cols+='<div class="wkcol"><div class="wh'+(d===todayIdx?" today":"")+'"><div class="wd">'+dias[d]+'</div><div class="wn">'+dd.getDate()+'</div></div><div class="wkbody">'+evs+'</div></div>';
+}
+return '<div class="weekgrid">'+cols+'</div>';
+}
+function monthView(){
+var now=new Date();var y=now.getFullYear(),m=now.getMonth();
+var first=new Date(y,m,1);var startDow=(first.getDay()+6)%7;
+var daysInMonth=new Date(y,m+1,0).getDate();
+var head=["Seg","Ter","Qua","Qui","Sex","Sáb","Dom"].map(function(d){return '<div class="mh">'+d+'</div>'}).join("");
+var cells="";
+for(var i=0;i<startDow;i++)cells+='<div class="mcell out"></div>';
+for(var day=1;day<=daysInMonth;day++){
+  var isToday=day===now.getDate();
+  // simulate consultations on weekdays
+  var dow=(startDow+day-1)%7;
+  var dots="";var cnt=0;
+  if(dow<5){var statuses=["aguardando","em_atendimento","atendido"];var n=(day%4)+1;cnt=n;for(var j=0;j<Math.min(n,3);j++){var sc=statusCfg(statuses[(day+j)%3]);dots+='<div class="d" style="background:'+sc.dot+'"></div>'}}
+  cells+='<div class="mcell'+(isToday?" today":"")+'"><div class="dn">'+day+'</div><div class="mdots">'+dots+'</div>'+(cnt?'<div class="mcount">'+cnt+'</div>':"")+'</div>';
+}
+return '<div class="monthgrid">'+head+cells+'</div>';
+}
+function setStatus(id,v){
+  if(roleIsSecretaria()&&v==="em_atendimento"){denyAction("status_change_denied_secretaria");return}
+  state.patients.forEach(function(p){if(p.id===id){p.status=v;touchPatient(p)}});
+  savePatients();
+  auditLog("update_patient_status",{patientId:id,status:v});
+  render()
+}
+
+// shared document grid renderer; mode: 'tele' (whatsapp+email) or 'pres' (print+whatsapp)
+function docGrid(mode){
+var sel=mode==="tele"?state.teleDoc:state.pres.doc;
+var store=mode==="tele"?state.teleText:state.pres.docText;
+var gen=mode==="tele"?state.teleGen:state.pres.docGen;
+var dbtns="";DOCS.forEach(function(d){dbtns+='<button class="'+(sel===d.id?"on":"")+'" onclick="selDoc(\x27'+mode+'\x27,\x27'+d.id+'\x27)">'+svg(d.ic,"ico-sm")+d.l+'</button>'});
+var darea="";
+if(sel){var d=DOCS.filter(function(x){return x.id===sel})[0];
+var loading=gen[sel]==="loading";
+var val=loading?"Gerando documento com IA…":(store[sel]!==undefined?store[sel]:d.tmpl);
+var surg=sel==="cirurgia"?'<div class="surgnote">'+svg("alert","ico-sm")+'Aguarda confirmação do médico responsável</div>':"";
+var genBtn='<button class="gen" onclick="gerarDoc(\x27'+mode+'\x27,\x27'+sel+'\x27)"'+(loading?" disabled":"")+'>'+svg("notes","ico-sm")+(loading?"Gerando…":"Gerar com IA")+'</button>';
+var actions=mode==="tele"
+  ?genBtn+'<button class="wa">'+svg("whatsapp","ico-sm")+'WhatsApp</button><button class="em">'+svg("mail","ico-sm")+'E-mail</button>'
+  :genBtn+'<button class="pr">'+svg("print","ico-sm")+'Imprimir</button><button class="wa">'+svg("whatsapp","ico-sm")+'WhatsApp</button>';
+darea='<div class="docarea">'+surg+'<textarea oninput="setDocText(\x27'+mode+'\x27,\x27'+sel+'\x27,this.value)"'+(loading?" disabled":"")+'>'+esc(val)+'</textarea><div class="docactions">'+actions+'</div></div>';
+}
+return '<div class="card"><div class="ahead" style="display:block"><div class="tt">'+svg("docs","ico-sm")+'Documentos Médicos</div><div class="ds">'+(mode==="tele"?"Emissão e envio digital ao paciente":"Emissão, impressão e envio ao paciente")+'</div></div><div style="padding:15px"><div class="docbtns">'+dbtns+'</div>'+darea+'</div></div>';
+}
+function selDoc(mode,id){
+  var store=mode==="tele"?state.teleText:state.pres.docText;
+  if(store[id]===undefined){
+    var d=DOCS.filter(function(x){return x.id===id})[0]||{tmpl:""};
+    var pt=selectedPatientForMode(mode==="tele"?"teleconsulta":"presencial")||{};
+    store[id]=formatMedicalDocument(mode,id,d.tmpl,pt);
+  }
+  if(mode==="tele")state.teleDoc=id;else state.pres.doc=id;
+  render()
+}
+function setDocText(mode,id,v){if(mode==="tele")state.teleText[id]=v;else state.pres.docText[id]=v}
+
+// Gera o documento via GPT a partir da anamnese/transcrição
+function gerarDoc(mode,id){
+  if(!aiReady()){alert("Backend de IA não conectado. Inicie o servidor (npm start) para gerar com IA.");return}
+  var gen=mode==="tele"?state.teleGen:state.pres.docGen;
+  var store=mode==="tele"?state.teleText:state.pres.docText;
+  gen[id]="loading";render();
+  var pt=selectedPatientForMode(mode==="tele"?"teleconsulta":"presencial")||{};
+  var paciente={nome:pt.name||"Paciente",cpf:pt.cpf||"",plano:pt.plano||""};
+  var anamnese=mode==="tele"?(state.teleTrans.anamData||null):(state.pres.anamData||null);
+  var transcricao=mode==="tele"?(state.teleTrans.liveText||""):(state.pres.liveText||"");
+
+  function enviarDocumento(anam){
+    return OrtoguIA.gerarDocumento(id,{paciente:paciente,anamnese:anam,transcricao:transcricao,instrucoes:""})
+      .then(function(texto){
+        gen[id]="done";
+        store[id]=formatMedicalDocument(mode,id,texto,pt);
+        if(pt&&pt.id){
+          saveDocumentToCloud(pt,mode==="tele"?"teleconsulta":"presencial",id,DOCS.filter(function(d){return d.id===id})[0].l,store[id],{anamnese:!!anam});
+        }
+        render();
+      })
+      .catch(function(e){gen[id]="done";alert("Falha ao gerar: "+e.message);render()});
+  }
+
+  // Em teleconsulta, tenta sempre estruturar a transcrição antes do documento.
+  if(mode==="tele" && transcricao && !anamnese){
+    OrtoguIA.gerarAnamnese({paciente:paciente,transcricao:transcricao})
+      .then(function(data){state.teleTrans.anamData=data;state.teleTrans.anam=true;return enviarDocumento(data)})
+      .catch(function(){state.teleTrans.anam=true;return enviarDocumento(null)});
+    return;
+  }
+
+  enviarDocumento(anamnese);
+}
+
+function ensureTeleWhatsappSessionFallback(){
+  var room="TELE-"+Date.now().toString(36).toUpperCase();
+  var join=window.location.origin+"/app.html?tab=teleconsulta&sala="+encodeURIComponent(room);
+  var p=telePatient();
+  var msg=[
+    "ORTOPGUIA Teleconsulta",
+    "Paciente: "+p.nome,
+    "Horario: "+p.agendaAt,
+    "Sala: "+room,
+    "Entrar: "+join,
+    "Se houver duvidas, responda esta mensagem."
+  ].join("\\n");
+  state.teleSession.roomId=room;
+  state.teleSession.joinUrl=join;
+  state.teleSession.waLink="https://wa.me/"+p.telefone+"?text="+encodeURIComponent(msg);
+}
+function ensureTeleWhatsappSession(){
+  if(state.teleSession.roomId&&state.teleSession.joinUrl&&state.teleSession.waLink)return Promise.resolve();
+  if(typeof OrtoguIA==="undefined"||!OrtoguIA.gerarLinkTeleconsultaWhatsApp){
+    ensureTeleWhatsappSessionFallback();
+    return Promise.resolve();
+  }
+  return OrtoguIA.gerarLinkTeleconsultaWhatsApp(telePatient())
+    .then(function(data){
+      if(data&&data.roomId&&data.joinUrl&&data.whatsappUrl){
+        state.teleSession.roomId=data.roomId;
+        state.teleSession.joinUrl=data.joinUrl;
+        state.teleSession.waLink=data.whatsappUrl;
+      }else{
+        ensureTeleWhatsappSessionFallback();
+      }
+    })
+    .catch(function(){
+      ensureTeleWhatsappSessionFallback();
+    });
+}
+function resetTeleWhatsappSession(){
+  state.teleSession.roomId="";
+  state.teleSession.joinUrl="";
+  state.teleSession.waLink="";
+}
+function openTeleWhatsapp(){
+  ensureTeleWhatsappSession().then(function(){window.open(state.teleSession.waLink,"_blank")});
+}
+function copyTeleJoinLink(){
+  ensureTeleWhatsappSession().then(function(){
+    if(navigator.clipboard&&navigator.clipboard.writeText){
+      navigator.clipboard.writeText(state.teleSession.joinUrl)
+        .then(function(){alert("Link da sala copiado.")})
+        .catch(function(){alert("Não foi possível copiar automaticamente.")});
+    }else{
+      alert("Seu navegador não permite cópia automática.");
+    }
+  });
+}
+function setTeleSystemAudio(v){state.teleSession.captureSystemAudio=!!v}
+function toggleTeleSession(){
+  if(roleIsSecretaria()){denyAction("tele_session_denied_secretaria");return}
+  var s=state.teleSession;
+  if(s.active){
+    s.active=false;
+    if(s.tiv){clearInterval(s.tiv);s.tiv=null}
+    toggleCall("on",false);
+    toggleTeleRec(false);
+    resetTeleWhatsappSession();
+    render();
+    return;
+  }
+  s.active=true;
+  s.t=0;
+  s.tiv=setInterval(function(){s.t++;var pill=document.getElementById("teleSessionTimer");if(pill){pill.textContent=fmtClockSec(s.t)}},1000);
+  ensureTeleWhatsappSession()
+    .finally(function(){
+      toggleCall("on",true);
+      toggleTeleRec(true);
+      render();
+    });
+}
+function togglePresSession(){
+  if(roleIsSecretaria()){denyAction("pres_session_denied_secretaria");return}
+  var p=state.pres;
+  if(p.active){
+    p.active=false;
+    if(p.tiv){clearInterval(p.tiv);p.tiv=null}
+    toggleRec(false);
+    render();
+    return;
+  }
+  p.active=true;
+  p.t=0;
+  p.tiv=setInterval(function(){p.t++;var pill=document.getElementById("presSessionTimer");if(pill){pill.textContent=fmtClockSec(p.t)}},1000);
+  toggleRec(true);
+  render();
+}
+
+function viewTele(){
+var c=state.call;var tt=state.teleTrans;var fmt=function(s){return String(Math.floor(s/60)).padStart(2,"0")+":"+String(s%60).padStart(2,"0")};
+var ts=state.teleSession;
+var pt=selectedPatientForMode("teleconsulta")||{id:"",name:"Paciente",cpf:"",plano:"",queixa:"",status:"aguardando",hora:""};
+loadPatientRepository(pt.id);
+var topActions='<div class="consult-head"><div class="head-actions"><button class="headbtn" onclick="goAgenda()">'+svg("agenda","ico-sm")+'Agenda</button><button class="headbtn primary" onclick="saveCurrentConsultation()">'+svg("check","ico-sm")+'Salvar</button></div></div>';
+var vi=c.on?'<div class="ph">'+svg("user","ico-lg")+'<div class="t">Câmera do Paciente</div></div><div class="tmr"><div class="d"></div>'+fmt(c.t)+'</div><div class="pip">'+svg(c.cam?"user":"camOff","ico")+'</div>':'<div class="ph">'+svg("teleconsulta","ico-lg")+'<div class="t">Aguardando conexão</div></div>';
+var transLines=tt.liveText?'<div class="line"><div class="av dr">'+svg("transcript","ico-sm")+'</div><div class="bub"><div class="sp">Transcrição</div><div class="tx">'+esc(tt.liveText)+'</div></div></div>':'<div class="empty">Inicie para transcrever a teleconsulta</div>';
+var transBlock='<div class="card" style="margin-top:14px"><div class="ahead" style="display:block"><div class="tt">'+svg("transcript","ico-sm")+'Transcrição da Teleconsulta</div><div class="ds">Controlada pelo botão Iniciar/Parar no topo da aba</div></div><div class="scroll" id="teletranscript">'+transLines+'</div></div>';
+var teleAnam='<div class="empty">Será gerada ao parar a transcrição</div>';
+if(tt.anam==="loading"){teleAnam='<div class="empty">Gerando resultado estruturado com IA…</div>'}
+else if(tt.anamData){
+  var A=tt.anamData;
+  var map=[["Queixa Principal",A.queixa_principal],["HDA",A.historia_doenca_atual],["Antecedentes",A.antecedentes],["Exame Físico",A.exame_fisico],["Hipóteses Diagnósticas",(A.hipoteses_diagnosticas||[]).join(" / ")],["Conduta Sugerida",A.conduta_sugerida]];
+  teleAnam="";map.forEach(function(a){if(a[1]){teleAnam+='<div class="sec"><div class="t">'+a[0]+'</div><div class="v">'+esc(a[1])+'</div></div>'}});
+  if(!teleAnam)teleAnam='<div class="empty">Resultado estruturado sem conteúdo suficiente.</div>';
+} else if(tt.anam){
+  teleAnam='<div class="empty">Não foi possível estruturar a transcrição.</div>';
+}
+var teleAnamBlock='<div class="card" style="margin-top:14px"><div class="ahead" style="display:block"><div class="tt">'+svg("notes","ico-sm")+'Resultado Estruturado (Anamnese)</div><div class="ds">Gerado automaticamente a partir da transcrição</div></div><div class="scroll anam">'+teleAnam+'</div></div>';
+  var teleCtrl='<div class="sessionbar"><div class="left"><button class="sessionbtn '+(ts.active?"live":"")+'" onclick="toggleTeleSession()">'+svg(ts.active?"stop":"rec","ico-sm")+(ts.active?"Parar":"Iniciar")+'</button><div class="timerpill"><span class="dot" style="'+(ts.active?"animation:pulse 1s infinite":"background:#A2ABAE")+'"></span><span id="teleSessionTimer">'+fmtClockSec(ts.t)+'</span></div></div><div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap"><label style="display:flex;align-items:center;gap:6px;font-size:11px;color:#697275"><input type="checkbox" '+(ts.captureSystemAudio?"checked":"")+' '+(ts.active?"disabled":"")+' onchange="setTeleSystemAudio(this.checked)">Capturar áudio do computador</label><div class="hint">Se abrir seletor, priorize a aba www.ortopguia.com.br com áudio.</div></div></div>';
+var waBlock='<div class="whats" style="margin-top:14px"><span class="wc">'+svg("whatsapp","ico")+'</span><div style="flex:1"><div class="t">Estrutura WhatsApp da Teleconsulta</div><div class="s">Sala: '+esc(ts.roomId||"ainda não gerada")+' · Link de entrada enviado ao paciente.</div></div><button class="pr" style="padding:8px 11px;border:1px solid #CFE0D8;background:#fff;border-radius:8px;color:#558776;font-size:11px" onclick="copyTeleJoinLink()">Copiar link</button><button class="wa" style="padding:8px 11px;border:none;background:#2E9E5B;border-radius:8px;color:#fff;font-size:11px" onclick="openTeleWhatsapp()">Abrir WhatsApp</button></div>';
+var teleStatus=statusCfg(pt.status||"aguardando");
+return '<div><div class="h2">Teleconsulta</div><div class="sub">Chamada de Vídeo · ORTOPGUIA Saúde Digital</div>'+topActions+teleCtrl+'<div class="card" style="padding:14px 16px;margin:8px 0 14px;display:flex;align-items:center;gap:13px"><div style="width:40px;height:40px;border-radius:50%;background:#EDF4F1;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#558776;flex-shrink:0">'+patientInitials(pt.name)+'</div><div style="flex:1;min-width:0"><div style="font-weight:600;font-size:13px">'+esc(pt.name)+'</div><div style="font-size:11px;color:#A2ABAE">'+esc(pt.cpf)+' · '+esc(pt.plano)+' · '+esc(pt.queixa)+'</div></div><div class="badge" style="background:'+teleStatus.bg+';color:'+teleStatus.tx+'">'+teleStatus.l+'</div></div><div class="row"><div class="video">'+vi+'</div><div class="panel"><div class="pblk"><div class="ptt">Controles</div><div class="ctrls"><button class="'+(c.mic?"on":"off")+'" onclick="toggleCall(\x27mic\x27)">'+svg(c.mic?"mic":"micOff","ico")+'<span class="l">'+(c.mic?"Microfone":"Mudo")+'</span></button><button class="'+(c.cam?"on":"off")+'" onclick="toggleCall(\x27cam\x27)">'+svg(c.cam?"cam":"camOff","ico")+'<span class="l">'+(c.cam?"Câmera":"Off")+'</span></button><button>'+svg("chat","ico")+'<span class="l">Chat</span></button><button>'+svg("clipboard","ico")+'<span class="l">Prontuário</span></button></div></div></div></div>'+transBlock+teleAnamBlock+docGrid("tele")+prontuarioWidget("tele")+rebookWidget("tele")+waBlock+'</div>';
+}
+function toggleTeleRec(forceStart){
+  var tt=state.teleTrans;
+  var useSystemAudio=state.teleSession.captureSystemAudio!==false;
+  var stopNow=(forceStart===false)||(forceStart!==true&&tt.rec);
+  if(stopNow){if(tt.ctrl){try{tt.ctrl.parar()}catch(e){}}tt.rec=false;render();gerarAnamneseTele();return}
+  if(forceStart===true&&tt.rec)return;
+  ensureAiNow(function(){
+    tt.rec=true;tt.liveText="";tt.anam=false;tt.anamData=null;render();
+    var pt=selectedPatientForMode("teleconsulta")||{};
+    OrtoguIA.transcricaoAoVivo({
+      paciente:{nome:pt.name||"Paciente",cpf:pt.cpf||""},
+      captureSystemAudio:useSystemAudio,
+      onTexto:function(t){state.teleTrans.liveText=t;render();var sc=document.getElementById("teletranscript");if(sc)sc.scrollTop=sc.scrollHeight},
+      onErro:function(m){
+        if(isRecoverableTranscribeError(m)){
+          state.teleTrans.liveText="⚠ Trecho de áudio inválido ignorado; transcrição continua.";
+          render();
+          return;
+        }
+        state.teleTrans.liveText="⚠ "+m;
+        state.teleTrans.rec=false;
+        if(state.teleTrans.ctrl){try{state.teleTrans.ctrl.parar()}catch(e){}}
+        render();
+      }
+    }).then(function(ctrl){state.teleTrans.ctrl=ctrl})
+  },function(){
+    state.teleTrans.liveText="⚠ Backend de IA indisponível. A transcrição da Teleconsulta exige conexão com o servidor.";
+    state.teleTrans.rec=false;
+    render();
+  });
+}
+function gerarAnamneseTele(){
+  var tt=state.teleTrans;
+  var texto=teleTranscriptText();
+  if(!texto){tt.anam=true;tt.anamData=null;render();return}
+  tt.anam="loading";render();
+  var pt=selectedPatientForMode("teleconsulta")||{};
+  ensureAiNow(function(){
+    OrtoguIA.gerarAnamnese({paciente:{nome:pt.name||"Paciente",cpf:pt.cpf||""},transcricao:texto})
+      .then(function(data){state.teleTrans.anamData=data;state.teleTrans.anam=true;if(pt&&pt.id){saveDocumentToCloud(pt,"teleconsulta","anamnese","Anamnese estruturada",JSON.stringify(data,null,2),{from:"tele"})}render()})
+      .catch(function(){state.teleTrans.anam=true;state.teleTrans.anamData=null;render()});
+  },function(){
+    state.teleTrans.anam=true;
+    state.teleTrans.anamData=null;
+    render();
+  });
+}
+  function toggleCall(k,forceOn){var c=state.call;if(k==="on"){var next=(typeof forceOn==="boolean")?forceOn:!c.on;if(next===c.on){return}c.on=next;if(c.on){c.t=0;c.iv=setInterval(function(){c.t++;var el=document.querySelector(".video .tmr");if(el)el.innerHTML='<div class="d"></div>'+String(Math.floor(c.t/60)).padStart(2,"0")+":"+String(c.t%60).padStart(2,"0")},1000)}else{if(c.iv){clearInterval(c.iv);c.iv=null}}render()}else{c[k]=!c[k];render()}}
+
+function viewPres(){
+var p=state.pres;var lines="";if(p.lines.length===0&&!p.rec){lines='<div class="empty">Pressione Iniciar para começar</div>'}
+var pt=selectedPatientForMode("presencial")||{id:"",name:"Paciente",cpf:"",plano:"",queixa:"",status:"aguardando",hora:""};
+loadPatientRepository(pt.id);
+var topActions='<div class="consult-head"><div class="head-actions"><button class="headbtn" onclick="goAgenda()">'+svg("agenda","ico-sm")+'Agenda</button><button class="headbtn primary" onclick="saveCurrentConsultation()">'+svg("check","ico-sm")+'Salvar</button></div></div>';
+p.lines.forEach(function(l){var cls=l.sp==="Médico"?"dr":"pa";var ini=l.sp==="Médico"?"DR":"PA";lines+='<div class="line"><div class="av '+cls+'">'+ini+'</div><div class="bub"><div class="sp">'+l.sp+'</div><div class="tx">'+esc(l.tx)+'</div></div></div>'});
+if(p.rec){lines+='<div class="typing"><div class="d"></div><div class="d" style="animation-delay:.2s"></div><div class="d" style="animation-delay:.4s"></div></div>'}
+var anam='<div class="empty">Gerada após a transcrição</div>';
+if(p.anam==="loading"){anam='<div class="empty">Gerando anamnese com IA…</div>'}
+else if(p.anam){
+  if(p.anamData){
+    var A=p.anamData;
+    var map=[["Identificação",A.identificacao],["Queixa Principal",A.queixa_principal],["HDA",A.historia_doenca_atual],["Antecedentes",A.antecedentes],["Exame Físico",A.exame_fisico],["Hipóteses Diagnósticas",(A.hipoteses_diagnosticas||[]).join(" / ")],["Conduta Sugerida",A.conduta_sugerida]];
+    anam="";map.forEach(function(a){if(a[1]){anam+='<div class="sec"><div class="t">'+a[0]+'</div><div class="v">'+esc(a[1])+'</div></div>'}});
+    if(!anam)anam='<div class="empty">Anamnese sem conteúdo suficiente.</div>';
+  } else {
+    anam='<div class="empty">Não foi possível gerar a anamnese estruturada com o agente.</div>';
+  }
+}
+var presCtrl='<div class="sessionbar"><div class="left"><button class="sessionbtn '+(p.active?"live":"")+'" onclick="togglePresSession()">'+svg(p.active?"stop":"rec","ico-sm")+(p.active?"Parar":"Iniciar")+'</button><div class="timerpill"><span class="dot" style="'+(p.active?"animation:pulse 1s infinite":"background:#A2ABAE")+'"></span><span id="presSessionTimer">'+fmtClockSec(p.t)+'</span></div></div><div class="hint">Iniciar controla a transcrição da consulta presencial</div></div>';
+var presStatus=statusCfg(pt.status||"aguardando");
+return '<div><div class="h2">Consulta Presencial</div><div class="sub">Transcrição em tempo real · Anamnese · Documentos</div>'+topActions+presCtrl+'<div class="card" style="padding:14px 16px;margin:8px 0 12px;display:flex;align-items:center;gap:13px"><div style="width:40px;height:40px;border-radius:50%;background:#EDF4F1;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#558776;flex-shrink:0">'+patientInitials(pt.name)+'</div><div style="flex:1;min-width:0"><div style="font-weight:600;font-size:13px">'+esc(pt.name)+'</div><div style="font-size:11px;color:#A2ABAE">'+esc(pt.cpf)+' · '+esc(pt.plano)+' · '+esc(pt.esp||"")+' · '+esc(pt.hora||"")+'</div></div><div class="badge" style="background:'+presStatus.bg+';color:'+presStatus.tx+'">'+presStatus.l+'</div></div><div class="grid2"><div class="card"><div class="ahead" style="display:block"><div class="tt">'+svg("transcript","ico-sm")+'Transcrição em Tempo Real</div><div class="ds">Controlada pelo botão Iniciar/Parar no topo da aba</div></div><div class="scroll" id="transcript">'+lines+'</div></div><div class="card"><div class="ahead" style="display:block"><div class="tt">'+svg("notes","ico-sm")+'Anamnese Estruturada</div><div class="ds">Gerada automaticamente da transcrição</div></div><div class="scroll anam">'+anam+'</div></div></div>'+docGrid("pres")+prontuarioWidget("pres")+rebookWidget("pres")+'</div>';
+}
+function toggleRec(forceStart){
+  var p=state.pres;
+  // PARAR
+  var stopNow=(forceStart===false)||(forceStart!==true&&p.rec);
+  if(stopNow){
+    if(p.ctrl){try{p.ctrl.parar()}catch(e){}}
+    if(p.iv){clearInterval(p.iv);p.iv=null}
+    p.rec=false;
+    render();
+    // ao parar, gera a anamnese a partir do texto capturado
+    gerarAnamnesePres();
+    return;
+  }
+  if(forceStart===true&&p.rec)return;
+  ensureAiNow(function(){
+    // INICIAR
+    p.rec=true;p.lines=[];p.idx=0;p.anam=false;p.anamData=null;p.liveText="";
+    render();
+    var pt=selectedPatientForMode("presencial")||{};
+
+    // TRANSCRIÇÃO REAL (microfone -> Whisper via WebSocket)
+    OrtoguIA.transcricaoAoVivo({
+      paciente:{nome:pt.name||"Paciente",cpf:pt.cpf||""},
+      onTexto:function(textoCompleto){
+        state.pres.liveText=textoCompleto;
+        state.pres.lines=[{sp:"Transcrição",tx:textoCompleto}];
+        render();
+        var sc=document.getElementById("transcript");if(sc)sc.scrollTop=sc.scrollHeight;
+      },
+      onErro:function(msg){
+        if(isRecoverableTranscribeError(msg)){
+          state.pres.lines=[{sp:"Sistema",tx:"⚠ Trecho de áudio inválido ignorado; transcrição continua."}];
+          render();
+          return;
+        }
+        state.pres.lines=[{sp:"Sistema",tx:"⚠ "+msg}];
+        state.pres.rec=false;
+        if(state.pres.ctrl){try{state.pres.ctrl.parar()}catch(e){}}
+        render();
+      }
+    }).then(function(ctrl){ state.pres.ctrl=ctrl; });
+  },function(){
+    state.pres.lines=[{sp:"Sistema",tx:"⚠ Backend de IA indisponível. A consulta presencial exige conexão com o servidor."}];
+    state.pres.rec=false;
+    render();
+  });
+}
+
+// Fallback: transcrição simulada (quando o backend está offline)
+function demoTranscript(){
+  var p=state.pres;p.idx=0;p.lines=[];
+  p.iv=setInterval(function(){
+    if(p.idx<TRANSCRIPT.length){
+      p.lines.push(TRANSCRIPT[p.idx++]);render();
+      var sc=document.getElementById("transcript");if(sc)sc.scrollTop=sc.scrollHeight;
+    }else{
+      clearInterval(p.iv);p.iv=null;p.rec=false;
+      p.liveText=TRANSCRIPT.map(function(l){return l.sp+": "+l.tx}).join(" ");
+      render();gerarAnamnesePres();
+    }
+  },1500);
+}
+
+// Gera a anamnese estruturada a partir da transcrição
+function gerarAnamnesePres(){
+  var p=state.pres;
+  var texto=presTranscriptText();
+  if(!texto){p.anam=true;p.anamData=null;render();return}
+  p.anam="loading";render();
+  var pt=selectedPatientForMode("presencial")||{};
+  ensureAiNow(function(){
+    OrtoguIA.gerarAnamnese({paciente:{nome:pt.name||"Paciente",cpf:pt.cpf||""},transcricao:texto})
+      .then(function(data){state.pres.anamData=data;state.pres.anam=true;if(pt&&pt.id){saveDocumentToCloud(pt,"presencial","anamnese","Anamnese estruturada",JSON.stringify(data,null,2),{from:"presencial"})}render()})
+      .catch(function(){state.pres.anam=true;state.pres.anamData=null;render()});
+  },function(){
+    state.pres.anam=true;
+    state.pres.anamData=null;
+    render();
+  });
+}
+
+function viewAgend(){
+var sec=roleIsSecretaria();
+var f=state.form;var ok=f.ok?'<div class="okmsg">'+svg("check","ico")+'<div><div class="t">Agendamento confirmado!</div><div class="s">WhatsApp enviado com data, horário e tempo estimado de espera.</div></div></div>':"";
+var esps=["Clínica Geral","Ortopedia","Cardiologia","Dermatologia","Ginecologia","Neurologia","Pediatria"].map(function(s){return '<option'+(f.esp===s?" selected":"")+'>'+s+'</option>'}).join("");
+return '<div><div class="h2">'+(sec?"Cadastro de Novo Paciente":"Novo Agendamento")+'</div><div class="sub">'+(sec?"Cadastro realizado pela secretaria":"Registro via central de atendimento")+'</div><div style="margin-top:18px"></div>'+ok+'<div class="card" style="padding:24px"><div class="form"><div><label class="lbl">Nome Completo *</label><input class="inp" value="'+esc(f.nome)+'" oninput="setForm(\x27nome\x27,this.value)" placeholder="Nome do paciente"></div><div class="frow"><div><label class="lbl">CPF *</label><input class="inp" value="'+esc(f.cpf)+'" oninput="setForm(\x27cpf\x27,this.value)" placeholder="000.000.000-00"></div><div><label class="lbl">Plano Amil</label><input class="inp" value="'+esc(f.plano)+'" oninput="setForm(\x27plano\x27,this.value)" placeholder="Ex: Amil S450"></div></div><div><label class="lbl">Queixa Principal</label><textarea class="inp" style="min-height:74px;resize:vertical" oninput="setForm(\x27queixa\x27,this.value)" placeholder="Descreva a queixa...">'+esc(f.queixa)+'</textarea></div><div class="frow"><div><label class="lbl">Tipo</label><select class="inp" onchange="setForm(\x27tipo\x27,this.value)"><option value="presencial"'+(f.tipo==="presencial"?" selected":"")+'>Presencial</option><option value="teleconsulta"'+(f.tipo==="teleconsulta"?" selected":"")+'>Teleconsulta</option></select></div><div><label class="lbl">Especialidade</label><select class="inp" onchange="setForm(\x27esp\x27,this.value)">'+esps+'</select></div><div><label class="lbl">Data</label><input class="inp" type="date" value="'+f.data+'" oninput="setForm(\x27data\x27,this.value)"></div><div><label class="lbl">Horário</label><input class="inp" type="time" value="'+f.hora+'" oninput="setForm(\x27hora\x27,this.value)"></div></div></div><div class="note">'+svg("whatsapp","ico-sm")+'<div>O paciente receberá automaticamente uma <strong style="color:#558776">mensagem via WhatsApp</strong> com confirmação da data, horário e tempo estimado de espera.</div></div><button class="submit" onclick="submitForm()">'+(sec?"Salvar Cadastro":"Confirmar Agendamento e Enviar WhatsApp")+'</button></div></div>';
+}
+function setForm(k,v){state.form[k]=v}
+function submitForm(){
+  var f=state.form;
+  if(!f.nome||!f.cpf){alert("Preencha nome e CPF");return}
+  var nextId=state.patients.reduce(function(m,p){return Math.max(m,Number(p.id)||0)},0)+1;
+  state.patients.push(normalizePatient({
+    id:nextId,
+    name:f.nome,
+    cpf:f.cpf,
+    plano:f.plano||"Não informado",
+    queixa:f.queixa||"Não informada",
+    tipo:f.tipo,
+    status:"aguardando",
+    hora:f.hora||"08:00",
+    esp:f.esp,
+    data:f.data||todayIso(),
+    aniversario:"",
+    medicacao:"",
+    consultasPrevias:0
+  }));
+  savePatients();
+  auditLog("patient_register_or_schedule",{patientId:nextId,tipo:f.tipo,esp:f.esp});
+  f.ok=true;
+  render();
+  setTimeout(function(){state.form={nome:"",cpf:"",plano:"",queixa:"",tipo:"presencial",esp:"Clínica Geral",data:"",hora:"",ok:false};render()},3000)
+}
+function viewLembretes(){
+  var hoje=new Date();
+  var mm=pad2(hoje.getMonth()+1);
+  var dd=pad2(hoje.getDate());
+  var alerta=[];
+  var aniversarios=[];
+  var meds=[];
+  state.patients.forEach(function(p){
+    var q=(p.queixa||"").toLowerCase();
+    if(q.indexOf("febre")!==-1||q.indexOf("ferimentos extensos")!==-1||q.indexOf("piora")!==-1||(p.consultasPrevias||0)>2){
+      alerta.push('<div class="line"><div class="av pa">AL</div><div class="bub"><div class="sp">'+esc(p.name)+'</div><div class="tx">'+esc(p.queixa)+' · '+((p.consultasPrevias||0)>2?"Mais que duas consultas":"Sinal de alerta")+'</div></div></div>');
+    }
+    if((p.aniversario||"").slice(5)===mm+"-"+dd){
+      aniversarios.push('<div class="line"><div class="av pa">AN</div><div class="bub"><div class="sp">'+esc(p.name)+'</div><div class="tx">Aniversário hoje · '+esc(p.aniversario)+'</div></div></div>');
+    }
+    if(p.medicacao){
+      meds.push('<div class="line"><div class="av pa">MD</div><div class="bub"><div class="sp">'+esc(p.name)+'</div><div class="tx">'+esc(p.medicacao)+'</div></div></div>');
+    }
+  });
+  var alertaBlock=alerta.length?alerta.join(""):'<div class="empty" style="padding-top:26px">Sem alertas críticos no momento.</div>';
+  var anivBlock=aniversarios.length?aniversarios.join(""):'<div class="empty" style="padding-top:26px">Sem aniversários hoje.</div>';
+  var medBlock=meds.length?meds.join(""):'<div class="empty" style="padding-top:26px">Sem lembretes de medicação.</div>';
+  return '<div><div class="h2">Lembretes Importantes</div><div class="sub">Acompanhamento da secretaria</div><div class="grid2" style="margin-top:18px"><div class="card"><div class="ahead" style="display:block"><div class="tt">'+svg("alert","ico-sm")+'Sinais de Alerta para Contato</div><div class="ds">Febre, ferimentos extensos, piora clínica ou mais de duas consultas</div></div><div class="scroll">'+alertaBlock+'</div></div><div class="card"><div class="ahead" style="display:block"><div class="tt">'+svg("star","ico-sm")+'Aniversários</div><div class="ds">Pacientes com aniversário no dia</div></div><div class="scroll">'+anivBlock+'</div></div></div><div class="card" style="margin-top:14px"><div class="ahead" style="display:block"><div class="tt">'+svg("notes","ico-sm")+'Lembretes de Medicações</div><div class="ds">Mensagens e reforços importantes para o contato</div></div><div class="scroll">'+medBlock+'</div></div></div>';
+}
+function viewRel(){
+var cards=[{l:"Consultas Hoje",v:"6",s:"4 presenciais · 2 tele",ic:"agenda"},{l:"Tempo Médio Espera",v:"18 min",s:"Abaixo da meta (25 min)",ic:"clock"},{l:"Atendidas no Mês",v:"142",s:"↑ 12% vs mês anterior",ic:"relatorios"},{l:"Teleconsultas",v:"2",s:"100% concluídas",ic:"teleconsulta"},{l:"Docs. Emitidos",v:"9",s:"Pres., atestados, exames",ic:"docs"},{l:"Satisfação",v:"4.8",s:"38 avaliações",ic:"star"}];
+var st="";cards.forEach(function(c){st+='<div class="stat"><div class="si">'+svg(c.ic,"ico")+'</div><div class="v">'+c.v+'</div><div class="l">'+c.l+'</div><div class="s">'+c.s+'</div></div>'});
+var bars=[["Presencial",4,"#1E4E58"],["Teleconsulta",2,"#6FA08C"]];var bh="";bars.forEach(function(b){bh+='<div class="b"><div class="bt"><span>'+b[0]+'</span><span class="v">'+b[1]+'</span></div><div class="track"><div class="fill" style="width:'+(b[1]/6*100)+'%;background:'+b[2]+'"></div></div></div>'});
+return '<div><div class="h2">Relatórios & Indicadores</div><div class="sub">Resumo operacional do dia e do mês</div><div class="stats" style="margin-top:18px">'+st+'</div><div class="card" style="padding:18px"><div style="font-weight:600;margin-bottom:13px;font-size:13px;color:#13404A;font-family:Sora">Distribuição por tipo — hoje</div><div class="bars">'+bh+'</div></div></div>';
+}
+function viewAssistentes(){
+return '<div><div class="h2">Assistentes</div><div class="sub">Estrutura inicial para integrar assistentes de IA no fluxo médico</div>'
+  +'<div class="grid2" style="margin-top:18px">'
+  +'<div class="card" style="padding:16px"><div class="tt">'+svg("notes","ico-sm")+'Assistente de Anamnese</div><div class="sub" style="margin-top:8px">Resumo clínico estruturado a partir da transcrição.</div><div style="margin-top:12px"><button class="headbtn" disabled>Em preparação</button></div></div>'
+  +'<div class="card" style="padding:16px"><div class="tt">'+svg("docs","ico-sm")+'Assistente de Documentos</div><div class="sub" style="margin-top:8px">Geração de documentos com contexto do paciente.</div><div style="margin-top:12px"><button class="headbtn" disabled>Em preparação</button></div></div>'
+  +'</div>'
+  +'<div class="card" style="padding:16px;margin-top:14px"><div class="tt">'+svg("clipboard","ico-sm")+'Próxima etapa técnica</div><div class="sub" style="margin-top:8px">Conectar catálogo de assistentes com permissões por perfil e ações por aba.</div></div>'
+  +'</div>';
+}
+function viewLgpd(){
+  if(!canAccessTab("lgpd"))return '<div><div class="h2">LGPD</div><div class="sub">Acesso restrito</div><div class="card" style="padding:16px;margin-top:14px">Seu perfil não possui permissão para governança de dados.</div></div>';
+  var patientsRows=state.patients.map(function(p){
+    return '<tr>'
+      +'<td style="padding:10px;border-bottom:1px solid #E6EDF0">'+esc(p.name||"")+'</td>'
+      +'<td style="padding:10px;border-bottom:1px solid #E6EDF0">'+esc(p.cpf||"")+'</td>'
+      +'<td style="padding:10px;border-bottom:1px solid #E6EDF0">'+esc((p.retentionUntil||"").slice(0,10))+'</td>'
+      +'<td style="padding:10px;border-bottom:1px solid #E6EDF0"><div style="display:flex;gap:6px;flex-wrap:wrap"><button class="headbtn" onclick="exportPatientData('+Number(p.id||0)+')">'+svg("download","ico-sm")+'Exportar</button><button class="headbtn" style="color:#C23C3A;border-color:#F1C9C7" onclick="deletePatientData('+Number(p.id||0)+')">'+svg("trash","ico-sm")+'Eliminar</button></div></td>'
+      +'</tr>';
+  }).join("");
+  var logs=readAuditLogs().slice(-20).reverse().map(function(l){
+    return '<tr>'
+      +'<td style="padding:8px;border-bottom:1px solid #E6EDF0">'+esc((l.at||"").replace("T"," ").slice(0,19))+'</td>'
+      +'<td style="padding:8px;border-bottom:1px solid #E6EDF0">'+esc(l.email||"")+'</td>'
+      +'<td style="padding:8px;border-bottom:1px solid #E6EDF0">'+esc(l.action||"")+'</td>'
+      +'<td style="padding:8px;border-bottom:1px solid #E6EDF0">'+esc(l.outcome||"ok")+'</td>'
+      +'</tr>';
+  }).join("");
+  return '<div><div class="h2">Governança LGPD</div><div class="sub">Consentimento, retenção, exportação e eliminação de dados</div>'
+    +'<div class="card" style="padding:16px;margin-top:14px"><div class="frow"><div><label class="lbl">Retenção (dias)</label><input class="inp" type="number" min="30" value="'+state.lgpd.retentionDays+'" oninput="setRetentionDays(this.value)"></div><div style="display:flex;align-items:flex-end"><button class="sessionbtn" onclick="runRetentionNow()">'+svg("lgpd","ico-sm")+'Executar Expurgo Agora</button></div></div><div class="sub" style="margin-top:8px">Último expurgo: '+esc(state.lgpd.lastPurgeAt?state.lgpd.lastPurgeAt.replace("T"," ").slice(0,19):"não executado")+' · itens removidos: '+Number(state.lgpd.expurged||0)+'</div></div>'
+    +'<div class="card" style="margin-top:14px"><div class="ahead" style="display:block"><div class="tt">'+svg("user","ico-sm")+'Direitos do Titular (Paciente)</div><div class="ds">Exportação e eliminação por paciente</div></div><div style="padding:10px;overflow:auto"><table style="width:100%;border-collapse:collapse;font-size:12px"><thead><tr><th style="text-align:left;padding:10px;border-bottom:1px solid #E6EDF0">Paciente</th><th style="text-align:left;padding:10px;border-bottom:1px solid #E6EDF0">CPF</th><th style="text-align:left;padding:10px;border-bottom:1px solid #E6EDF0">Retenção até</th><th style="text-align:left;padding:10px;border-bottom:1px solid #E6EDF0">Ações</th></tr></thead><tbody>'+(patientsRows||'<tr><td colspan="4" style="padding:14px;color:#A2ABAE">Nenhum paciente cadastrado.</td></tr>')+'</tbody></table></div></div>'
+    +'<div class="card" style="margin-top:14px"><div class="ahead" style="display:block"><div class="tt">'+svg("clipboard","ico-sm")+'Trilha de Auditoria</div><div class="ds">Eventos recentes com perfil, ação e resultado</div></div><div style="padding:10px;overflow:auto"><table style="width:100%;border-collapse:collapse;font-size:12px"><thead><tr><th style="text-align:left;padding:8px;border-bottom:1px solid #E6EDF0">Data/Hora</th><th style="text-align:left;padding:8px;border-bottom:1px solid #E6EDF0">Usuário</th><th style="text-align:left;padding:8px;border-bottom:1px solid #E6EDF0">Ação</th><th style="text-align:left;padding:8px;border-bottom:1px solid #E6EDF0">Resultado</th></tr></thead><tbody>'+(logs||'<tr><td colspan="4" style="padding:14px;color:#A2ABAE">Sem eventos.</td></tr>')+'</tbody></table></div></div>'
+    +'</div>';
+}
+function render(){
+  if(!requireValidSession())return;
+  if(!canAccessTab(state.tab)){auditLog("tab_access_denied",{tab:state.tab},"denied");state.tab=navForRole()[0].id}
+  syncProfileUI();
+  renderNav();
+  var v=document.getElementById("view");
+  if(state.tab==="agenda")v.innerHTML=viewAgenda();
+  else if(state.tab==="teleconsulta")v.innerHTML=viewTele();
+  else if(state.tab==="presencial")v.innerHTML=viewPres();
+  else if(state.tab==="agendamento")v.innerHTML=viewAgend();
+  else if(state.tab==="assistentes")v.innerHTML=viewAssistentes();
+  else if(state.tab==="lembretes")v.innerHTML=viewLembretes();
+  else if(state.tab==="relatorios")v.innerHTML=viewRel();
+  else if(state.tab==="lgpd")v.innerHTML=viewLgpd();
+}
+if(requireValidSession()){
+  runRetentionNow();
+  auditLog("session_open",{tab:state.tab});
+  render();
+}
+</script>
+<!-- Conexão com o backend de agentes de IA (transcrição + documentos) -->
+<script src="ortoguia-agents.js"></script>
+<script>
+  // Configuração automática por ambiente.
+  // Localhost -> backend local; produção -> tenta subdomínio API e cai para mesmo host.
+  (function () {
+    var session={};
+    try{session=JSON.parse(localStorage.getItem("ortopguia:session")||"{}")||{}}catch(e){session={}}
+    var isLocal =
+      window.location.hostname === "localhost" ||
+      window.location.hostname === "127.0.0.1";
+    var candidates = isLocal
+      ? ["http://localhost:8787"]
+      : ["https://api.ortopguia.com.br", window.location.origin];
+
+    function tryCandidate(i) {
+      if (i >= candidates.length) {
+        window.__ORTO_AI_READY = false;
+        return;
+      }
+
+      OrtoguIA.config({ baseUrl: candidates[i], authToken: session.accessToken || "" });
+      OrtoguIA.ping(2500)
+        .then(function (ok) {
+          if (ok) {
+            window.__ORTO_AI_READY = true;
+            return;
+          }
+          tryCandidate(i + 1);
+        })
+        .catch(function () {
+          tryCandidate(i + 1);
+        });
+    }
+
+    // Ativa IA real somente quando o backend estiver acessível.
+    tryCandidate(0);
+  })();
+</script>
+</body>
+</html>
