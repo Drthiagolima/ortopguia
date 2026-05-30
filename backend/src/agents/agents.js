@@ -208,8 +208,39 @@ async function formatWithAssistant({ draft, agentId, input }) {
   const assistantMsg = msgs.data.find((m) => m.role === "assistant");
   if (!assistantMsg?.content?.length) return draft;
 
-  const textPart = assistantMsg.content.find((c) => c.type === "text");
-  return (textPart?.text?.value || draft).trim();
+  const textParts = assistantMsg.content
+    .filter((c) => c.type === "text")
+    .map((c) => String(c?.text?.value || "").trim())
+    .filter(Boolean);
+
+  if (!textParts.length) return draft;
+  return textParts;
+}
+
+function normalizeOutputs(raw) {
+  if (Array.isArray(raw)) {
+    return raw.map((x) => String(x || "").trim()).filter(Boolean);
+  }
+
+  const txt = String(raw || "").trim();
+  if (!txt) return [];
+
+  try {
+    const parsed = JSON.parse(txt);
+    if (Array.isArray(parsed)) {
+      return parsed.map((x) => String(x || "").trim()).filter(Boolean);
+    }
+  } catch {
+    // segue fluxo textual
+  }
+
+  const splitByDelimiters = txt
+    .split(/\n(?:-{3,}|={3,})\n/g)
+    .map((p) => String(p || "").trim())
+    .filter(Boolean);
+
+  if (splitByDelimiters.length > 1) return splitByDelimiters;
+  return [txt];
 }
 
 /**
@@ -259,10 +290,13 @@ export async function runAgent(agentId, input) {
     assistantError = err.message || "Falha ao aplicar assistant finalizador";
   }
 
+  const outputs = normalizeOutputs(formatted);
+
   return {
     ok: true,
     agent: agentId,
-    text: formatted,
+    text: outputs[0] || "",
+    outputs,
     pipeline: {
       draftBy: MODEL_TEXT,
       finalByAssistant: resolveAssistantId(agentId) || null,
