@@ -4,6 +4,7 @@ import http from "http";
 import dotenv from "dotenv";
 import helmet from "helmet";
 import { rateLimit } from "express-rate-limit";
+import jwt from "jsonwebtoken";
 import { promises as fs } from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -51,6 +52,40 @@ const REPO_DIR = path.join(__dirname, "..", "data");
 const REPO_FILE = path.join(REPO_DIR, "patient-repository.json");
 const REPO_AUDIT_FILE = path.join(REPO_DIR, "patient-repository-audit.log");
 const REPOSITORY_API_TOKEN = String(process.env.REPOSITORY_API_TOKEN || "").trim();
+const JWT_SECRET = String(process.env.JWT_SECRET || "").trim();
+const JWT_EXPIRES_IN = String(process.env.JWT_EXPIRES_IN || "8h").trim() || "8h";
+
+const defaultUsers = [
+  { id: "med_thiago_lima", email: "thiagolima@ortopguia.com.br", role: "medico", name: "Thiago Lima" },
+  { id: "med_tiago_careno", email: "tiagocareno@ortopguia.com.br", role: "medico", name: "Tiago Careno" },
+  { id: "med_ortoguia_alias", email: "thiagolima@ortoguia.com.br", role: "medico", name: "Thiago Lima" },
+  { id: "med_ortoguia_alias2", email: "tiagocareno@ortoguia.com.br", role: "medico", name: "Tiago Careno" },
+  { id: "sec_mariana", email: "sec.mariana@ortopguia.com.br", role: "secretaria", name: "Mariana" },
+];
+
+let authUsers = defaultUsers;
+try {
+  const parsed = JSON.parse(String(process.env.AUTH_USERS_JSON || "[]"));
+  if (Array.isArray(parsed) && parsed.length) {
+    authUsers = parsed
+      .filter((u) => u && u.email && u.role)
+      .map((u, i) => ({
+        id: String(u.id || `user_${i + 1}`),
+        email: String(u.email).trim().toLowerCase(),
+        role: String(u.role).trim().toLowerCase(),
+        name: String(u.name || u.email).trim(),
+      }));
+  }
+} catch {
+  authUsers = defaultUsers;
+}
+
+const allowedPasswords = String(
+  process.env.AUTH_DEFAULT_PASSWORDS || "ortopguiapadrao,ortoguiapadrao,padrao,senhapadrao"
+)
+  .split(",")
+  .map((s) => s.trim())
+  .filter(Boolean);
 
 async function readRepository() {
   try {
@@ -70,7 +105,35 @@ async function writeRepository(repo) {
   await fs.writeFile(REPO_FILE, JSON.stringify(repo, null, 2), "utf8");
 }
 
+function parseBearerToken(req) {
+  const raw = String(req.headers.authorization || "");
+  return raw.startsWith("Bearer ") ? raw.slice(7).trim() : "";
+}
+
+function signAccessToken(user) {
+  if (!JWT_SECRET) {
+    throw new Error("JWT_SECRET não configurado");
+  }
+  return jwt.sign(
+    {
+      sub: user.id,
+      email: user.email,
+      role: user.role,
+      name: user.name,
+    },
+    JWT_SECRET,
+    {
+      expiresIn: JWT_EXPIRES_IN,
+      issuer: "ortoguia-backend",
+      audience: "ortoguia-app",
+    }
+  );
+}
+
 function resolveActor(req) {
+  if (req.authUser && req.authUser.id) {
+    return { id: String(req.authUser.id), role: String(req.authUser.role || "unknown") };
+  }
   const actorId = String(req.headers["x-user-id"] || req.headers["x-doctor-id"] || "anonymous").trim();
   const actorRole = String(req.headers["x-user-role"] || "unknown").trim();
   return { id: actorId || "anonymous", role: actorRole || "unknown" };
@@ -83,13 +146,37 @@ async function appendRepositoryAudit(event) {
 }
 
 function authorizeRepository(req, res, next) {
-  if (!REPOSITORY_API_TOKEN) return next();
-  const raw = String(req.headers.authorization || "");
-  const token = raw.startsWith("Bearer ") ? raw.slice(7).trim() : "";
-  if (token !== REPOSITORY_API_TOKEN) {
-    return res.status(401).json({ ok: false, error: "Não autorizado para repositório" });
+  const token = parseBearerToken(req);
+
+  if (JWT_SECRET && token) {
+    try {
+      const payload = jwt.verify(token, JWT_SECRET, {
+        issuer: "ortoguia-backend",
+        audience: "ortoguia-app",
+      });
+      req.authUser = {
+        id: String(payload.sub || payload.email || "user"),
+        email: String(payload.email || ""),
+        role: String(payload.role || "unknown"),
+        name: String(payload.name || payload.email || "Usuário"),
+      };
+      return next();
+    } catch {
+      // fallback para token legado abaixo
+    }
   }
-  return next();
+
+  if (REPOSITORY_API_TOKEN && token === REPOSITORY_API_TOKEN) {
+    req.authUser = {
+      id: "legacy_repository_token",
+      email: "",
+      role: "system",
+      name: "Legacy Token",
+    };
+    return next();
+  }
+
+  return res.status(401).json({ ok: false, error: "Não autorizado para repositório" });
 }
 
 // CORS — apenas origens permitidas
@@ -116,6 +203,54 @@ app.get("/api/health", (_req, res) => {
 // Lista de agentes disponíveis
 app.get("/api/agents", (_req, res) => {
   res.json({ ok: true, agents: listAgents() });
+});
+
+/**
+ * Login (JWT)
+ * POST /api/auth/login
+ * body: { email, password, lgpdAccepted }
+ */
+app.post("/api/auth/login", (req, res) => {
+  try {
+    if (!JWT_SECRET) {
+      return res.status(503).json({ ok: false, error: "Autenticação indisponível (JWT_SECRET ausente)" });
+    }
+
+    const body = req.body || {};
+    const email = String(body.email || "").trim().toLowerCase();
+    const password = String(body.password || "");
+    const lgpdAccepted = !!body.lgpdAccepted;
+
+    if (!email || !password) {
+      return res.status(400).json({ ok: false, error: "email e password são obrigatórios" });
+    }
+    if (!lgpdAccepted) {
+      return res.status(400).json({ ok: false, error: "Aceite LGPD é obrigatório" });
+    }
+
+    const user = authUsers.find((u) => u.email === email);
+    if (!user || !allowedPasswords.includes(password)) {
+      return res.status(401).json({ ok: false, error: "Credenciais inválidas" });
+    }
+
+    const token = signAccessToken(user);
+    return res.json({
+      ok: true,
+      data: {
+        accessToken: token,
+        tokenType: "Bearer",
+        expiresIn: JWT_EXPIRES_IN,
+        user: {
+          id: user.id,
+          email: user.email,
+          role: user.role,
+          name: user.name,
+        },
+      },
+    });
+  } catch (err) {
+    return res.status(500).json({ ok: false, error: err.message || "Erro de autenticação" });
+  }
 });
 
 /**
