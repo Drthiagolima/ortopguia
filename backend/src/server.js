@@ -49,6 +49,8 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const REPO_DIR = path.join(__dirname, "..", "data");
 const REPO_FILE = path.join(REPO_DIR, "patient-repository.json");
+const REPO_AUDIT_FILE = path.join(REPO_DIR, "patient-repository-audit.log");
+const REPOSITORY_API_TOKEN = String(process.env.REPOSITORY_API_TOKEN || "").trim();
 
 async function readRepository() {
   try {
@@ -66,6 +68,28 @@ async function readRepository() {
 async function writeRepository(repo) {
   await fs.mkdir(REPO_DIR, { recursive: true });
   await fs.writeFile(REPO_FILE, JSON.stringify(repo, null, 2), "utf8");
+}
+
+function resolveActor(req) {
+  const actorId = String(req.headers["x-user-id"] || req.headers["x-doctor-id"] || "anonymous").trim();
+  const actorRole = String(req.headers["x-user-role"] || "unknown").trim();
+  return { id: actorId || "anonymous", role: actorRole || "unknown" };
+}
+
+async function appendRepositoryAudit(event) {
+  await fs.mkdir(REPO_DIR, { recursive: true });
+  const line = JSON.stringify({ at: new Date().toISOString(), ...event }) + "\n";
+  await fs.appendFile(REPO_AUDIT_FILE, line, "utf8");
+}
+
+function authorizeRepository(req, res, next) {
+  if (!REPOSITORY_API_TOKEN) return next();
+  const raw = String(req.headers.authorization || "");
+  const token = raw.startsWith("Bearer ") ? raw.slice(7).trim() : "";
+  if (token !== REPOSITORY_API_TOKEN) {
+    return res.status(401).json({ ok: false, error: "Não autorizado para repositório" });
+  }
+  return next();
 }
 
 // CORS — apenas origens permitidas
@@ -159,6 +183,8 @@ app.post("/api/teleconsulta/whatsapp-link", (req, res) => {
   });
 });
 
+app.use("/api/repository", authorizeRepository);
+
 /**
  * Repositorio em nuvem do prontuario do paciente.
  * POST /api/repository/documents
@@ -177,13 +203,21 @@ app.post("/api/repository/documents", async (req, res) => {
       patientId,
       patientName: String(body.patientName || "Paciente").trim() || "Paciente",
       mode: String(body.mode || "").trim(),
-      docType: String(body.docType || "").trim() || "documento",
+      docType: String(body.docType || body.documentType || "").trim() || "documento",
       title: String(body.title || "Documento").trim() || "Documento",
       content: String(body.content || "").trim(),
       metadata: body.metadata && typeof body.metadata === "object" ? body.metadata : {},
     };
     repo.documents.push(item);
     await writeRepository(repo);
+    await appendRepositoryAudit({
+      action: "DOCUMENT_CREATED",
+      actor: resolveActor(req),
+      patientId,
+      documentId: item.id,
+      mode: item.mode || null,
+      docType: item.docType,
+    });
     res.json({ ok: true, data: item });
   } catch (err) {
     res.status(500).json({ ok: false, error: err.message || "Erro ao salvar repositório" });
@@ -200,9 +234,51 @@ app.get("/api/repository/patient/:patientId", async (req, res) => {
     const documents = repo.documents
       .filter((d) => String(d.patientId) === patientId)
       .sort((a, b) => Date.parse(b.createdAt || 0) - Date.parse(a.createdAt || 0));
+    await appendRepositoryAudit({
+      action: "DOCUMENT_LIST_VIEWED",
+      actor: resolveActor(req),
+      patientId,
+      totalReturned: documents.length,
+    });
     res.json({ ok: true, data: { patientId, documents } });
   } catch (err) {
     res.status(500).json({ ok: false, error: err.message || "Erro ao ler repositório" });
+  }
+});
+
+/**
+ * DELETE /api/repository/patient/:patientId/documents/:docId
+ */
+app.delete("/api/repository/patient/:patientId/documents/:docId", async (req, res) => {
+  try {
+    const patientId = String(req.params.patientId || "").trim();
+    const docId = String(req.params.docId || "").trim();
+    if (!patientId || !docId) {
+      return res.status(400).json({ ok: false, error: "patientId e docId são obrigatórios" });
+    }
+
+    const repo = await readRepository();
+    const index = repo.documents.findIndex(
+      (d) => String(d.patientId) === patientId && String(d.id) === docId
+    );
+
+    if (index < 0) {
+      return res.status(404).json({ ok: false, error: "Documento não encontrado" });
+    }
+
+    const [removed] = repo.documents.splice(index, 1);
+    await writeRepository(repo);
+    await appendRepositoryAudit({
+      action: "DOCUMENT_DELETED",
+      actor: resolveActor(req),
+      patientId,
+      documentId: removed.id,
+      docType: removed.docType || null,
+    });
+
+    return res.json({ ok: true, data: { patientId, documentId: removed.id } });
+  } catch (err) {
+    return res.status(500).json({ ok: false, error: err.message || "Erro ao excluir documento" });
   }
 });
 
