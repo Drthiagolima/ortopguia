@@ -96,8 +96,8 @@ let authUsers = defaultUsers;
 try {
   const parsed = JSON.parse(String(process.env.AUTH_USERS_JSON || "[]"));
   if (Array.isArray(parsed) && parsed.length) {
-    authUsers = parsed
-      .filter((u) => u && u.email && u.role)
+    const parsedUsers = parsed
+      .filter((u) => u && u.email && u.role && u.password)
       .map((u, i) => ({
         id: String(u.id || `user_${i + 1}`),
         email: String(u.email).trim().toLowerCase(),
@@ -105,6 +105,7 @@ try {
         name: String(u.name || u.email).trim(),
         password: String(u.password || "").trim(),
       }));
+    authUsers = parsedUsers.length ? parsedUsers : defaultUsers;
   }
 } catch {
   authUsers = defaultUsers;
@@ -232,6 +233,7 @@ app.post("/api/auth/login", (req, res) => {
     const body = req.body || {};
     const email = String(body.email || "").trim().toLowerCase();
     const password = String(body.password || "");
+    const requestedProfile = String(body.profile || "").trim().toLowerCase();
     const lgpdAccepted = !!body.lgpdAccepted;
 
     if (!email || !password) {
@@ -244,6 +246,12 @@ app.post("/api/auth/login", (req, res) => {
     const user = authUsers.find((u) => u.email === email);
     if (!user || !user.password || user.password !== password) {
       return res.status(401).json({ ok: false, error: "Credenciais inválidas" });
+    }
+    if (requestedProfile && user.role !== requestedProfile) {
+      return res.status(403).json({ ok: false, error: "Perfil não autorizado para este login" });
+    }
+    if (user.role !== "medico" && user.role !== "secretaria") {
+      return res.status(403).json({ ok: false, error: "Perfil não permitido" });
     }
 
     const token = signAccessToken(user);
