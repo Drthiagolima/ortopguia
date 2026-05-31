@@ -61,9 +61,14 @@ const SAO_PAULO_UTC_OFFSET_MINUTES = -180;
 const REMINDER_TICK_MS = Number(process.env.WHATSAPP_REMINDER_TICK_MS || 60_000);
 const WHATSAPP_WEBHOOK_VERIFY_TOKEN = String(process.env.WHATSAPP_WEBHOOK_VERIFY_TOKEN || "").trim();
 const WHATSAPP_INBOUND_AUTH_TOKEN = String(process.env.WHATSAPP_INBOUND_AUTH_TOKEN || "").trim();
+const WHATSAPP_PROVIDER = String(process.env.WHATSAPP_PROVIDER || "auto").trim().toLowerCase();
 const WHATSAPP_SEND_URL = String(process.env.WHATSAPP_SEND_URL || "").trim();
 const WHATSAPP_SEND_TOKEN = String(process.env.WHATSAPP_SEND_TOKEN || "").trim();
 const WHATSAPP_FROM = String(process.env.WHATSAPP_FROM || "").trim();
+const META_WHATSAPP_TOKEN = String(process.env.META_WHATSAPP_TOKEN || "").trim();
+const META_WHATSAPP_PHONE_NUMBER_ID = String(process.env.META_WHATSAPP_PHONE_NUMBER_ID || "").trim();
+const META_WHATSAPP_API_VERSION = String(process.env.META_WHATSAPP_API_VERSION || "v20.0").trim() || "v20.0";
+const META_WHATSAPP_GRAPH_URL = String(process.env.META_WHATSAPP_GRAPH_URL || "").trim();
 
 const defaultUsers = [
   {
@@ -383,9 +388,23 @@ async function reserveNextAvailableSlot({ mode, preferredDate, preferredTime }) 
   return null;
 }
 
+function resolveWhatsAppProvider() {
+  if (WHATSAPP_PROVIDER === "meta") return "meta";
+  if (WHATSAPP_PROVIDER === "generic") return "generic";
+  if (META_WHATSAPP_TOKEN && META_WHATSAPP_PHONE_NUMBER_ID) return "meta";
+  if (WHATSAPP_SEND_URL) return "generic";
+  return "mock";
+}
+
+function resolveMetaSendUrl() {
+  const base = META_WHATSAPP_GRAPH_URL || `https://graph.facebook.com/${META_WHATSAPP_API_VERSION}`;
+  return `${base.replace(/\/$/, "")}/${META_WHATSAPP_PHONE_NUMBER_ID}/messages`;
+}
+
 async function sendWhatsAppMessage(to, text, metadata = {}) {
   const phone = normalizePhoneBR(to);
   if (!phone) return { ok: false, error: "Telefone inválido" };
+  const provider = resolveWhatsAppProvider();
   const payload = {
     from: WHATSAPP_FROM || undefined,
     to: phone,
@@ -393,9 +412,64 @@ async function sendWhatsAppMessage(to, text, metadata = {}) {
     metadata,
   };
 
-  if (!WHATSAPP_SEND_URL) {
+  if (provider === "mock") {
     await appendOutboxLog({ direction: "outbound", provider: "mock", payload });
     return { ok: true, mock: true };
+  }
+
+  if (provider === "meta") {
+    if (!META_WHATSAPP_TOKEN || !META_WHATSAPP_PHONE_NUMBER_ID) {
+      await appendOutboxLog({
+        direction: "outbound",
+        provider: "meta",
+        payload,
+        error: "META_WHATSAPP_TOKEN ou META_WHATSAPP_PHONE_NUMBER_ID ausentes",
+      });
+      return { ok: false, error: "Configuração Meta WhatsApp incompleta" };
+    }
+
+    const metaUrl = resolveMetaSendUrl();
+    const metaPayload = {
+      messaging_product: "whatsapp",
+      to: phone,
+      type: "text",
+      text: {
+        body: String(text || ""),
+        preview_url: false,
+      },
+    };
+
+    try {
+      const response = await fetch(metaUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${META_WHATSAPP_TOKEN}`,
+        },
+        body: JSON.stringify(metaPayload),
+      });
+      const raw = await response.text();
+      let body = null;
+      try {
+        body = raw ? JSON.parse(raw) : null;
+      } catch {
+        body = { raw };
+      }
+      await appendOutboxLog({
+        direction: "outbound",
+        provider: "meta",
+        status: response.status,
+        payload: metaPayload,
+        response: body,
+      });
+      if (!response.ok) {
+        return { ok: false, error: `Falha Meta WhatsApp (${response.status})`, response: body };
+      }
+      return { ok: true, provider: "meta", response: body };
+    } catch (err) {
+      await appendOutboxLog({ direction: "outbound", provider: "meta", payload: metaPayload, error: err.message });
+      return { ok: false, error: err.message || "Erro ao enviar via Meta WhatsApp" };
+    }
   }
 
   try {
