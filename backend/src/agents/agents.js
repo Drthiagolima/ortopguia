@@ -40,6 +40,38 @@ const DISCLAIMER =
   "Se faltar informação essencial, sinalize com [VERIFICAR]. Escreva em português do Brasil, " +
   "em tom técnico, claro e objetivo. Não inclua avisos de IA no corpo do documento.";
 
+function triagemToText(triagem) {
+  if (!triagem || typeof triagem !== "object") return "-";
+  const parts = [];
+
+  if (Number.isFinite(Number(triagem.escalaDor))) {
+    parts.push(`Escala de dor (0-10): ${Number(triagem.escalaDor)}`);
+  }
+
+  if (triagem.vistaCorpo) {
+    parts.push(`Vista corporal informada: ${String(triagem.vistaCorpo)}`);
+  }
+
+  if (triagem.respostas && typeof triagem.respostas === "object") {
+    parts.push(`Respostas de triagem: ${JSON.stringify(triagem.respostas)}`);
+  }
+
+  if (Array.isArray(triagem.locaisDor) && triagem.locaisDor.length) {
+    parts.push(
+      `Locais de dor marcados: ${triagem.locaisDor
+        .map((d) => {
+          if (!d || typeof d !== "object") return "[VERIFICAR]";
+          const label = d.label || d.id || "[VERIFICAR]";
+          const side = d.side ? ` (${d.side})` : "";
+          return `${label}${side}`;
+        })
+        .join(", ")}`
+    );
+  }
+
+  return parts.length ? parts.join("\n") : "-";
+}
+
 export const AGENTS = {
   // 1) Transcrição -> Anamnese estruturada (JSON)
   anamnese: {
@@ -48,6 +80,11 @@ export const AGENTS = {
     system:
       `${DISCLAIMER}\n` +
       "Tarefa: converter a transcrição de uma consulta em uma ANAMNESE ESTRUTURADA. " +
+      "Considere também os dados opcionais de triagem por clique (quando fornecidos), " +
+      "principalmente escala de dor, local/lado da dor e vista corporal (frente/costas), " +
+      "integrando esses dados na história da doença atual e nas hipóteses diagnósticas, sem contradizer a transcrição. " +
+      "Priorize identificar red flags, critérios de urgência e necessidade de encaminhamento para ortopedia ou cirurgia. " +
+      "Inclua também o tempo-alvo de atendimento e a rota sugerida conforme gravidade clínica quando houver dados suficientes. " +
       "Responda APENAS com um objeto JSON válido, sem texto antes ou depois, no formato:\n" +
       `{
   "identificacao": "",
@@ -55,14 +92,22 @@ export const AGENTS = {
   "historia_doenca_atual": "",
   "antecedentes": "",
   "exame_fisico": "",
+  "red_flags_identificados": ["", ""],
+  "criterios_urgencia": "",
+  "nivel_urgencia": "baixa|moderada|alta",
+  "tempo_alvo_atendimento": "",
+  "rota_sugerida": "",
+  "encaminhamento_ortopedia": "",
+  "avaliacao_cirurgica": "",
   "hipoteses_diagnosticas": ["", ""],
   "conduta_sugerida": ""
 }\n` +
-      "Use somente o que aparece na transcrição. Campos sem informação ficam como string vazia " +
+      "Use somente o que aparece na transcrição e na triagem opcional fornecida. Campos sem informação ficam como string vazia " +
       "ou com [VERIFICAR]. Não faça diagnóstico definitivo; ofereça hipóteses.",
-    build: ({ paciente, transcricao }) =>
+    build: ({ paciente, transcricao, triagem }) =>
       `Dados do paciente: ${JSON.stringify(paciente || {})}\n\n` +
-      `Transcrição da consulta:\n"""${transcricao || ""}"""`,
+      `Triagem opcional estruturada:\n${triagemToText(triagem)}\n\n` +
+      `Transcrição da consulta:\n\"\"\"${transcricao || ""}\"\"\"`,
   },
 
   // 2) Prescrição
@@ -76,9 +121,10 @@ export const AGENTS = {
       "Inclua orientações não-farmacológicas quando pertinente. " +
       "Para qualquer dose ou medicamento que dependa de avaliação adicional, marque [VERIFICAR]. " +
       "Não prescreva controlados sem indicação explícita no contexto.",
-    build: ({ paciente, anamnese, transcricao, instrucoes }) =>
+    build: ({ paciente, anamnese, transcricao, instrucoes, triagem }) =>
       `Paciente: ${JSON.stringify(paciente || {})}\n` +
       `Anamnese/resumo: ${typeof anamnese === "object" ? JSON.stringify(anamnese) : anamnese || ""}\n` +
+      `Triagem opcional: ${triagemToText(triagem)}\n` +
       `Transcrição (se houver): ${transcricao || "-"}\n` +
       `Instruções do médico: ${instrucoes || "Prescrever conforme o quadro."}`,
   },
@@ -93,9 +139,10 @@ export const AGENTS = {
       "Inclua: identificação do paciente, finalidade (afastamento/comparecimento), período em dias, " +
       "e CID apenas se o médico autorizar/fornecer. Não inclua diagnóstico no atestado sem autorização. " +
       "Deixe espaços [VERIFICAR] para dados ausentes (ex.: número de dias).",
-    build: ({ paciente, instrucoes, anamnese }) =>
+    build: ({ paciente, instrucoes, anamnese, triagem }) =>
       `Paciente: ${JSON.stringify(paciente || {})}\n` +
       `Contexto clínico: ${typeof anamnese === "object" ? JSON.stringify(anamnese) : anamnese || ""}\n` +
+      `Triagem opcional: ${triagemToText(triagem)}\n` +
       `Instruções do médico: ${instrucoes || "Atestado de afastamento; dias a definir."}`,
   },
 
@@ -108,9 +155,10 @@ export const AGENTS = {
       "Tarefa: redigir um RELATÓRIO MÉDICO descritivo. " +
       "Estruture em: história, achados do exame, evolução, conclusão e recomendações. " +
       "Linguagem técnica adequada a outro profissional/operadora. Não invente exames não citados.",
-    build: ({ paciente, anamnese, transcricao, instrucoes }) =>
+    build: ({ paciente, anamnese, transcricao, instrucoes, triagem }) =>
       `Paciente: ${JSON.stringify(paciente || {})}\n` +
       `Anamnese: ${typeof anamnese === "object" ? JSON.stringify(anamnese) : anamnese || ""}\n` +
+      `Triagem opcional: ${triagemToText(triagem)}\n` +
       `Transcrição: ${transcricao || "-"}\n` +
       `Finalidade do relatório: ${instrucoes || "Relatório clínico geral."}`,
   },
@@ -124,9 +172,10 @@ export const AGENTS = {
       "Tarefa: gerar um PEDIDO DE EXAMES. Liste em tópicos (um por linha) os exames pertinentes " +
       "à hipótese diagnóstica, com lateralidade/incidência quando aplicável (ex.: Raio-X joelho D, AP e perfil). " +
       "Inclua justificativa clínica curta ao final. Não solicite exames sem relação com o quadro.",
-    build: ({ paciente, anamnese, instrucoes }) =>
+    build: ({ paciente, anamnese, instrucoes, triagem }) =>
       `Paciente: ${JSON.stringify(paciente || {})}\n` +
       `Hipóteses/anamnese: ${typeof anamnese === "object" ? JSON.stringify(anamnese) : anamnese || ""}\n` +
+      `Triagem opcional: ${triagemToText(triagem)}\n` +
       `Instruções: ${instrucoes || "Solicitar exames para elucidar o quadro."}`,
   },
 
@@ -141,9 +190,10 @@ export const AGENTS = {
       "justificativa clínica baseada na anamnese, materiais/OPME se citados, e caráter (eletivo/urgência). " +
       "Acrescente ao final a linha: 'Status: aguardando confirmação do médico responsável.' " +
       "Não defina técnica cirúrgica detalhada; mantenha no nível de solicitação administrativa.",
-    build: ({ paciente, anamnese, instrucoes }) =>
+    build: ({ paciente, anamnese, instrucoes, triagem }) =>
       `Paciente: ${JSON.stringify(paciente || {})}\n` +
       `Quadro/anamnese: ${typeof anamnese === "object" ? JSON.stringify(anamnese) : anamnese || ""}\n` +
+      `Triagem opcional: ${triagemToText(triagem)}\n` +
       `Instruções do médico: ${instrucoes || "Solicitar procedimento ortopédico conforme indicação."}`,
   },
 
@@ -157,9 +207,10 @@ export const AGENTS = {
       "Estruture em: objetivos terapêuticos, terapias/intervenções propostas, frequência/duração e orientações de seguimento. " +
       "Inclua critérios de reavaliação e sinais de alerta para retorno. " +
       "Quando faltar dado essencial, use [VERIFICAR].",
-    build: ({ paciente, anamnese, transcricao, instrucoes }) =>
+    build: ({ paciente, anamnese, transcricao, instrucoes, triagem }) =>
       `Paciente: ${JSON.stringify(paciente || {})}\n` +
       `Anamnese/resumo: ${typeof anamnese === "object" ? JSON.stringify(anamnese) : anamnese || ""}\n` +
+      `Triagem opcional: ${triagemToText(triagem)}\n` +
       `Transcrição: ${transcricao || "-"}\n` +
       `Instruções do médico: ${instrucoes || "Montar plano terapêutico inicial e seguimento."}`,
   },
