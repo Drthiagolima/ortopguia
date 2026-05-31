@@ -40,9 +40,14 @@ O servidor sobe em `http://localhost:8787` por padrão.
 - `WHATSAPP_REMINDER_TICK_MS` — intervalo do worker de lembretes (padrão `60000`)
 - `WHATSAPP_WEBHOOK_VERIFY_TOKEN` — token de verificação do webhook (GET)
 - `WHATSAPP_INBOUND_AUTH_TOKEN` — token opcional no header `x-whatsapp-token` para webhook POST
+- `WHATSAPP_PROVIDER` — `auto` (padrão), `meta` ou `generic`
 - `WHATSAPP_SEND_URL` — endpoint HTTP do provedor WhatsApp para envio (se ausente, usa log mock)
 - `WHATSAPP_SEND_TOKEN` — token Bearer opcional para envio no provedor
 - `WHATSAPP_FROM` — identificador/número de origem no provedor (quando necessário)
+- `META_WHATSAPP_TOKEN` — token de acesso da Meta Cloud API
+- `META_WHATSAPP_PHONE_NUMBER_ID` — phone number id da Meta Cloud API
+- `META_WHATSAPP_API_VERSION` — versão Graph API (padrão `v20.0`)
+- `META_WHATSAPP_GRAPH_URL` — base opcional da Graph API (override)
 
 Exemplo de `AUTH_USERS_JSON`:
 
@@ -114,7 +119,21 @@ curl -X POST http://localhost:8787/api/whatsapp/inbound-test \
 
 Observação operacional:
 
-- Se `WHATSAPP_SEND_URL` não estiver configurado, o backend continua processando toda a automação e grava as mensagens no outbox mock (sem envio real ao WhatsApp).
+- Prioridade do provedor de envio:
+  - `WHATSAPP_PROVIDER=meta` força envio pela Meta Cloud API.
+  - `WHATSAPP_PROVIDER=generic` força envio por `WHATSAPP_SEND_URL`.
+  - `WHATSAPP_PROVIDER=auto` (padrão): usa Meta quando as variáveis `META_*` estiverem completas; caso contrário usa `WHATSAPP_SEND_URL`; se nada estiver configurado, usa modo mock em log.
+
+Exemplo (Meta Cloud API):
+
+```env
+WHATSAPP_PROVIDER=meta
+WHATSAPP_WEBHOOK_VERIFY_TOKEN=seu_token_de_verificacao
+WHATSAPP_INBOUND_AUTH_TOKEN=token_interno_opcional
+META_WHATSAPP_TOKEN=EAAB...
+META_WHATSAPP_PHONE_NUMBER_ID=123456789012345
+META_WHATSAPP_API_VERSION=v20.0
+```
 
 ## Como a transcrição "ao vivo" funciona
 
