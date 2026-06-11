@@ -790,21 +790,55 @@ function authorizeRepository(req, res, next) {
   return res.status(401).json({ ok: false, error: "JWT obrigatório para repositório" });
 }
 
-// CORS — apenas origens permitidas
-const allowed = (process.env.ALLOWED_ORIGINS || "")
+// CORS — evita erro 500 em preflight e permite domínios oficiais de produção.
+const defaultAllowedOrigins = [
+  "https://simplesurgery.com.br",
+  "https://www.simplesurgery.com.br",
+  "https://api.ortopguia.com.br",
+  "https://api.ortoguia.com.br",
+  "https://simplesurgery.vercel.app",
+];
+
+const envAllowedOrigins = (process.env.ALLOWED_ORIGINS || "")
   .split(",")
   .map((s) => s.trim())
   .filter(Boolean);
 
-app.use(
-  cors({
-    origin(origin, cb) {
-      // permite ferramentas locais (sem origin) e origens da lista
-      if (!origin || allowed.length === 0 || allowed.includes(origin)) return cb(null, true);
-      return cb(new Error("Origem não permitida pelo CORS: " + origin));
-    },
-  })
-);
+const allowedOrigins = Array.from(new Set([...defaultAllowedOrigins, ...envAllowedOrigins]));
+
+function isOriginAllowed(origin) {
+  if (!origin) return true;
+  if (allowedOrigins.length === 0) return true;
+  return allowedOrigins.includes(origin);
+}
+
+const corsOptions = {
+  origin(origin, cb) {
+    // Nunca lançar erro aqui para não transformar preflight em HTTP 500.
+    if (isOriginAllowed(origin)) return cb(null, true);
+    return cb(null, false);
+  },
+  methods: ["GET", "HEAD", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  allowedHeaders: [
+    "Content-Type",
+    "Authorization",
+    "X-Requested-With",
+    "X-User-Id",
+    "X-User-Role",
+    "X-Doctor-Id",
+  ],
+  optionsSuccessStatus: 204,
+  maxAge: 86400,
+};
+
+app.use(cors(corsOptions));
+app.options("*", cors(corsOptions));
+
+app.use((req, res, next) => {
+  const origin = String(req.headers.origin || "").trim();
+  if (!origin || isOriginAllowed(origin)) return next();
+  return res.status(403).json({ ok: false, error: `Origem não permitida pelo CORS: ${origin}` });
+});
 
 // Saúde do serviço
 app.get("/api/health", (_req, res) => {
