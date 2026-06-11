@@ -1,0 +1,851 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ORTOPGUIA — Atendimento ortopédico guiado por IA | ortopguia.com.br</title>
+<link rel="icon" type="image/svg+xml" href="favicon-ortoguia.svg">
+
+<meta name="description" content="ORTOPGUIA — atendimento ortopédico inicial guiado por inteligência artificial. Teleconsulta e consulta presencial.">
+<link rel="canonical" href="https://ortopguia.com.br/">
+<link rel="alternate" href="https://ortopguia.com/">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  html{scroll-behavior:smooth}
+  body{font-family:'Inter',sans-serif;color:#33393B;background:#FCFDFE;line-height:1.5;overflow-x:hidden}
+  a{text-decoration:none;color:inherit}
+  button{font-family:inherit;cursor:pointer;border:none}
+  input{font-family:inherit;outline:none}
+  svg{display:block}
+  .ico{width:20px;height:20px;stroke:currentColor;stroke-width:1.6;fill:none;stroke-linecap:round;stroke-linejoin:round}
+  .ico-sm{width:16px;height:16px;stroke:currentColor;stroke-width:1.7;fill:none;stroke-linecap:round;stroke-linejoin:round}
+  .ico-lg{width:26px;height:26px;stroke:currentColor;stroke-width:1.5;fill:none;stroke-linecap:round;stroke-linejoin:round}
+  .wrap{max-width:1180px;margin:0 auto;padding:0 28px}
+
+  /* NAV */
+  .nav{position:sticky;top:0;z-index:50;background:rgba(252,253,254,.85);backdrop-filter:blur(12px);border-bottom:1px solid #EBF0F2}
+  .nav .inner{max-width:1180px;margin:0 auto;padding:14px 28px;display:flex;align-items:center;gap:30px}
+  .logo{display:flex;align-items:center;gap:11px}
+  .logo .ic{width:38px;height:38px;border-radius:11px;background:#1E4E58;display:flex;align-items:center;justify-content:center}
+  .logo .ic svg{width:21px;height:21px;stroke:#fff;stroke-width:1.5;fill:none}
+  .logo .nm{font-family:'Sora';font-weight:600;font-size:19px;letter-spacing:-.4px;line-height:1.05}
+  .logo .nm .orto{color:#1E4E58}.logo .nm .gu{color:#33393B}.logo .nm .ia{color:#C99746;font-weight:700}
+  .logo .nm .ia .i-dot{position:relative;display:inline-block}
+  .logo .nm .ia .i-dot:after{content:"";position:absolute;left:50%;transform:translateX(-50%);top:-.18em;width:.2em;height:.2em;border-radius:50%;background:currentColor}
+  .logo .sb{color:#A2ABAE;font-size:8px;letter-spacing:2px;text-transform:uppercase;margin-top:2px}
+  .navlinks{display:flex;gap:28px;margin-left:auto;align-items:center}
+  .navlinks a{font-size:14px;color:#566066;font-weight:500;transition:color .15s}
+  .navlinks a:hover{color:#1E4E58}
+  .btn{padding:10px 20px;border-radius:10px;font-size:14px;font-weight:600;font-family:'Sora';transition:all .15s}
+  .btn-ghost{background:transparent;color:#1E4E58;border:1px solid #D5DFE3}
+  .btn-ghost:hover{background:#F2F6F8}
+  .btn-primary{background:#1E4E58;color:#fff}
+  .btn-primary:hover{background:#13404A}
+  .navtoggle{display:none;background:transparent;color:#1E4E58}
+
+  /* HERO */
+  .hero{padding:80px 0 70px;position:relative;overflow:hidden}
+  .hero:before{content:"";position:absolute;top:-200px;right:-200px;width:600px;height:600px;border-radius:50%;background:radial-gradient(circle,#EDF4F1,transparent 70%);z-index:0}
+  .hero .inner{display:grid;grid-template-columns:1.05fr .95fr;gap:56px;align-items:center;position:relative;z-index:1}
+  .badge-pill{display:inline-flex;align-items:center;gap:7px;background:#EDF4F1;color:#558776;padding:6px 14px;border-radius:30px;font-size:12.5px;font-weight:600;margin-bottom:24px}
+  .badge-pill .d{width:7px;height:7px;border-radius:50%;background:#2E9E5B}
+  h1{font-family:'Sora';font-size:46px;font-weight:700;letter-spacing:-1.4px;line-height:1.08;color:#13404A}
+  h1 .hl{color:#1E4E58;position:relative}
+  h1 .hl:after{content:"";position:absolute;left:0;right:0;bottom:4px;height:10px;background:#F8F0E2;z-index:-1}
+  .lead{font-size:17px;color:#566066;margin-top:22px;line-height:1.65;max-width:520px}
+  .hero-cta{display:flex;gap:14px;margin-top:34px;flex-wrap:wrap}
+  .btn-lg{padding:14px 26px;font-size:15px;border-radius:12px;display:inline-flex;align-items:center;gap:9px}
+  .trust{display:flex;gap:26px;margin-top:40px;flex-wrap:wrap}
+  .trust .it{display:flex;align-items:center;gap:9px}
+  .trust .ic-b{width:38px;height:38px;border-radius:10px;background:#F2F6F8;display:flex;align-items:center;justify-content:center;color:#1E4E58;flex-shrink:0}
+  .trust .tt{font-family:'Sora';font-weight:700;font-size:16px;color:#13404A;line-height:1}
+  .trust .ts{font-size:11px;color:#A2ABAE;margin-top:3px}
+
+  /* AUTH CARD */
+  .authcard{background:#fff;border:1px solid #E6EDF0;border-radius:20px;box-shadow:0 20px 50px rgba(19,64,74,.1);padding:32px;position:relative}
+  .authtabs{display:flex;background:#F2F6F8;border-radius:11px;padding:4px;gap:3px;margin-bottom:24px}
+  .authtabs button{flex:1;padding:10px;border-radius:8px;font-size:13.5px;font-weight:600;font-family:'Sora';color:#697275;background:transparent;transition:all .15s}
+  .authtabs button.on{background:#fff;color:#13404A;box-shadow:0 1px 4px rgba(19,64,74,.1)}
+  .field{margin-bottom:16px}
+  .field label{display:block;font-size:11px;font-weight:600;color:#697275;text-transform:uppercase;letter-spacing:.7px;margin-bottom:7px}
+  .field .ipwrap{position:relative}
+  .field .ipwrap > svg{position:absolute;left:13px;top:50%;transform:translateY(-50%);color:#A2ABAE}
+  .field input{width:100%;padding:12px 14px 12px 42px;border:1px solid #E6EDF0;border-radius:11px;font-size:14px;color:#33393B;background:#FCFDFE;transition:border-color .15s}
+  .field input:focus{border-color:#1E4E58;background:#fff}
+  .field .pass-field input{padding-right:44px}
+  .pass-toggle{position:absolute;right:10px;top:50%;transform:translateY(-50%);width:28px;height:28px;border-radius:8px;background:transparent;color:#A2ABAE;display:flex;align-items:center;justify-content:center}
+  .pass-toggle:hover{background:#F2F6F8;color:#1E4E58}
+  .pass-toggle:focus-visible{outline:2px solid #1E4E58;outline-offset:2px}
+  .pass-toggle svg{position:static;transform:none}
+  .authrow{display:flex;justify-content:space-between;align-items:center;margin:-4px 0 20px;font-size:12.5px}
+  .authrow label{display:flex;align-items:center;gap:7px;color:#697275;cursor:pointer}
+  .authrow a{color:#1E4E58;font-weight:600}
+  .profile-select{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:4px 0 14px}
+  .profile-select label{display:flex;align-items:center;justify-content:center;gap:6px;border:1px solid #E6EDF0;background:#fff;color:#566066;border-radius:10px;padding:10px 8px;font-size:12px;font-weight:600;cursor:pointer}
+  .profile-select input{accent-color:#1E4E58}
+  .profile-help{font-size:11px;color:#697275;margin:-4px 0 14px}
+  .authsubmit{width:100%;padding:14px;background:#1E4E58;color:#fff;border-radius:12px;font-size:15px;font-weight:600;font-family:'Sora';display:flex;align-items:center;justify-content:center;gap:9px;transition:background .15s}
+  .authsubmit:hover{background:#13404A}
+  .divider{display:flex;align-items:center;gap:14px;margin:22px 0;color:#A2ABAE;font-size:12px}
+  .divider:before,.divider:after{content:"";flex:1;height:1px;background:#EBF0F2}
+  .ssobtn{width:100%;padding:12px;background:#fff;border:1px solid #E6EDF0;border-radius:11px;font-size:14px;font-weight:600;color:#566066;display:flex;align-items:center;justify-content:center;gap:9px;transition:all .15s}
+  .ssobtn:hover{background:#F8FAFB;border-color:#D5DFE3}
+  .authfine{text-align:center;font-size:11.5px;color:#A2ABAE;margin-top:18px;line-height:1.6}
+  .authfine a{color:#558776;font-weight:600}
+
+  /* SECTIONS */
+  .section{padding:72px 0}
+  .section-tint{background:#F4F8FA;border-top:1px solid #EBF0F2;border-bottom:1px solid #EBF0F2}
+  .sec-head{text-align:center;max-width:640px;margin:0 auto 48px}
+  .sec-tag{font-size:12.5px;font-weight:700;color:#C99746;text-transform:uppercase;letter-spacing:1.6px}
+  .sec-head h2{font-family:'Sora';font-size:34px;font-weight:700;letter-spacing:-.9px;color:#13404A;margin-top:12px}
+  .sec-head p{font-size:16px;color:#566066;margin-top:14px;line-height:1.6}
+
+  .feat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:22px}
+  .feat{background:#fff;border:1px solid #E6EDF0;border-radius:16px;padding:28px 24px;transition:transform .2s,box-shadow .2s}
+  .feat:hover{transform:translateY(-3px);box-shadow:0 12px 30px rgba(19,64,74,.08)}
+  .feat .fi{width:48px;height:48px;border-radius:13px;background:#EDF4F1;display:flex;align-items:center;justify-content:center;color:#1E4E58;margin-bottom:18px}
+  .feat h3{font-family:'Sora';font-size:18px;font-weight:600;color:#13404A;letter-spacing:-.3px}
+  .feat p{font-size:14px;color:#697275;margin-top:10px;line-height:1.6}
+
+  /* TWO MODES */
+  .modes{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+  .mode{border-radius:18px;padding:34px 30px;position:relative;overflow:hidden}
+  .mode.tele{background:linear-gradient(155deg,#234E58,#13404A);color:#fff}
+  .mode.pres{background:#fff;border:1px solid #E6EDF0}
+  .mode .mi{width:52px;height:52px;border-radius:14px;display:flex;align-items:center;justify-content:center;margin-bottom:20px}
+  .mode.tele .mi{background:rgba(255,255,255,.13);color:#fff}
+  .mode.pres .mi{background:#EDF4F1;color:#1E4E58}
+  .mode h3{font-family:'Sora';font-size:23px;font-weight:700;letter-spacing:-.5px}
+  .mode.pres h3{color:#13404A}
+  .mode p{font-size:14.5px;margin-top:12px;line-height:1.65}
+  .mode.tele p{color:rgba(255,255,255,.8)}
+  .mode.pres p{color:#697275}
+  .mode ul{list-style:none;margin-top:20px;display:flex;flex-direction:column;gap:11px}
+  .mode li{display:flex;align-items:flex-start;gap:10px;font-size:14px}
+  .mode.tele li{color:rgba(255,255,255,.92)}
+  .mode.pres li{color:#33393B}
+  .mode li .ck{flex-shrink:0;margin-top:2px}
+  .mode.tele li .ck{color:#9FD3BE}
+  .mode.pres li .ck{color:#2E9E5B}
+
+  /* STEPS */
+  .steps{display:grid;grid-template-columns:repeat(4,1fr);gap:18px;counter-reset:s}
+  .step{position:relative;padding-top:8px}
+  .step .n{width:40px;height:40px;border-radius:50%;background:#1E4E58;color:#fff;font-family:'Sora';font-weight:700;font-size:16px;display:flex;align-items:center;justify-content:center;margin-bottom:16px}
+  .step h4{font-family:'Sora';font-size:16px;font-weight:600;color:#13404A}
+  .step p{font-size:13.5px;color:#697275;margin-top:8px;line-height:1.55}
+
+  /* CTA BAND */
+  .ctaband{background:linear-gradient(155deg,#234E58,#13404A);border-radius:22px;padding:54px 48px;text-align:center;position:relative;overflow:hidden}
+  .ctaband:before{content:"";position:absolute;top:-100px;left:-80px;width:340px;height:340px;border-radius:50%;background:rgba(143,175,159,.12)}
+  .ctaband:after{content:"";position:absolute;bottom:-120px;right:-60px;width:320px;height:320px;border-radius:50%;background:rgba(214,168,90,.1)}
+  .ctaband h2{font-family:'Sora';font-size:32px;font-weight:700;color:#fff;letter-spacing:-.8px;position:relative}
+  .ctaband p{color:rgba(255,255,255,.78);font-size:16px;margin-top:14px;position:relative}
+  .ctaband .btn-lg{margin-top:28px;background:#fff;color:#13404A;position:relative}
+  .ctaband .btn-lg:hover{background:#F2F6F8}
+
+  /* FOOTER */
+  footer{padding:50px 0 30px;border-top:1px solid #EBF0F2}
+  .foot-grid{display:grid;grid-template-columns:1.6fr 1fr 1fr 1fr;gap:32px;margin-bottom:36px}
+  .foot-about p{font-size:13px;color:#697275;margin-top:14px;line-height:1.65;max-width:280px}
+  .foot-col h5{font-family:'Sora';font-size:13px;font-weight:600;color:#13404A;margin-bottom:14px}
+  .foot-col a{display:block;font-size:13px;color:#697275;margin-bottom:9px;transition:color .15s}
+  .foot-col a:hover{color:#1E4E58}
+  .foot-bottom{display:flex;justify-content:space-between;align-items:center;padding-top:24px;border-top:1px solid #EBF0F2;font-size:12px;color:#A2ABAE;flex-wrap:wrap;gap:10px}
+  .foot-bottom .dom{color:#1E4E58;font-weight:600}
+
+  .wa-float{position:fixed;right:18px;bottom:18px;z-index:70;display:inline-flex;align-items:center;gap:10px;padding:12px 16px;border-radius:999px;background:#25D366;color:#fff;font-family:'Sora';font-size:13px;font-weight:700;box-shadow:0 12px 28px rgba(37,211,102,.35);border:1px solid rgba(255,255,255,.35);transition:transform .15s,box-shadow .15s}
+  .wa-float:hover{transform:translateY(-2px);box-shadow:0 16px 34px rgba(37,211,102,.42)}
+  .wa-float .ico-wa{width:18px;height:18px;stroke:#fff;stroke-width:1.8;fill:none;stroke-linecap:round;stroke-linejoin:round}
+  .wa-float{animation:waPulse 2.2s ease-in-out infinite}
+  @keyframes waPulse{0%{transform:scale(1)}50%{transform:scale(1.02)}100%{transform:scale(1)}}
+
+  @media(max-width:900px){
+    .hero .inner{grid-template-columns:1fr;gap:40px}
+    .authcard{max-width:440px}
+    h1{font-size:38px}
+    .feat-grid{grid-template-columns:1fr 1fr}
+    .modes{grid-template-columns:1fr}
+    .steps{grid-template-columns:1fr 1fr}
+    .foot-grid{grid-template-columns:1fr 1fr}
+  }
+  @media(max-width:600px){
+    .wrap,.nav .inner{padding-left:18px;padding-right:18px}
+    .navlinks{display:none}
+    h1{font-size:31px;letter-spacing:-1px}
+    .lead{font-size:15px}
+    .feat-grid{grid-template-columns:1fr}
+    .steps{grid-template-columns:1fr}
+    .sec-head h2{font-size:27px}
+    .ctaband{padding:40px 24px}
+    .ctaband h2{font-size:25px}
+    .foot-grid{grid-template-columns:1fr 1fr}
+    .hero{padding:48px 0 50px}
+    .section{padding:54px 0}
+    .wa-float{right:12px;bottom:12px;padding:11px 12px}
+    .wa-float .txt{display:none}
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="nav">
+  <div class="inner">
+    <a href="#" class="logo">
+      <div class="ic"><svg viewBox="0 0 64 64"><path d="M44 20a16 16 0 1 0 0 24" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round"/><line x1="44" y1="26" x2="44" y2="38" stroke="#C99746" stroke-width="4.5" stroke-linecap="round"/><line x1="38" y1="32" x2="50" y2="32" stroke="#9FD3BE" stroke-width="4.5" stroke-linecap="round"/></svg></div>
+      <div><div class="nm"><span class="orto">ORTOP</span><span class="gu">GU</span><span class="ia"><span class="i-dot">I</span>A</span></div><div class="sb">Saúde Digital</div></div>
+    </a>
+    <div class="navlinks">
+      <a href="#recursos">Recursos</a>
+      <a href="#modalidades">Modalidades</a>
+      <a href="#como">Como funciona</a>
+      <a href="#acesso" class="btn btn-ghost">Entrar</a>
+    </div>
+  </div>
+</nav>
+
+<!-- HERO -->
+<header class="hero">
+  <div class="inner wrap">
+    <div>
+      <div class="badge-pill"><span class="d"></span>Plataforma de saúde ortopédica com IA</div>
+      <h1>Atendimento ortopédico <span class="hl">guiado por inteligência artificial</span></h1>
+      <p class="lead">O ORTOPGUIA conecta pacientes e médicos por teleconsulta e atendimento presencial, com triagem inteligente, anamnese automática e gestão completa do cuidado — do agendamento à prescrição.</p>
+      <div class="hero-cta">
+        <a href="#acesso" class="btn btn-primary btn-lg">Acessar plataforma <svg class="ico-sm" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+        <a href="https://wa.me/5521994626336?text=Olá!%20Quero%20informações%20sobre%20teleconsultas%20e%20automações%20para%20marcação%20de%20pacientes%20no%20ORTOPGUIA." target="_blank" rel="noopener noreferrer" class="btn btn-ghost btn-lg">Falar no WhatsApp</a>
+        <a href="#como" class="btn btn-ghost btn-lg">Ver como funciona</a>
+      </div>
+      <div class="trust">
+        <div class="it"><div class="ic-b"><svg class="ico" viewBox="0 0 24 24"><path d="M12 2l8 4v6c0 5-3.5 8-8 10-4.5-2-8-5-8-10V6z"/><path d="M9 12l2 2 4-4"/></svg></div><div><div class="tt">LGPD</div><div class="ts">Dados protegidos</div></div></div>
+        <div class="it"><div class="ic-b"><svg class="ico" viewBox="0 0 24 24"><rect x="2" y="6" width="13" height="12" rx="2"/><path d="M15 10l6-3v10l-6-3"/></svg></div><div><div class="tt">Teleconsulta</div><div class="ts">Atendimento por vídeo</div></div></div>
+        <div class="it"><div class="ic-b"><svg class="ico" viewBox="0 0 24 24"><path d="M3 21V8l9-5 9 5v13"/><path d="M9 21v-6h6v6"/></svg></div><div><div class="tt">Presencial</div><div class="ts">Fluxo com documentação</div></div></div>
+      </div>
+    </div>
+
+    <!-- AUTH -->
+    <div id="acesso" class="authcard">
+      <div class="authtabs">
+        <button id="tab-login" class="on" onclick="switchAuth('login')">Entrar</button>
+      </div>
+
+      <!-- LOGIN -->
+      <form id="form-login" onsubmit="return submitAuth(event,'login')">
+        <div class="field" style="margin-bottom:10px">
+          <label>Perfil de acesso</label>
+          <div class="profile-select">
+            <label><input type="radio" name="login-profile" value="medico" checked> Médico</label>
+            <label><input type="radio" name="login-profile" value="secretaria"> Secretaria</label>
+          </div>
+          <div id="login-profile-help" class="profile-help">Médico: thiagolima@ortopguia.com.br ou tiagocareno@ortopguia.com.br</div>
+        </div>
+        <div class="field">
+          <label>E-mail</label>
+          <div class="ipwrap"><svg class="ico-sm" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg><input id="login-email" type="email" placeholder="voce@email.com" required></div>
+        </div>
+        <div class="field">
+          <label>Senha</label>
+          <div class="ipwrap pass-field"><svg class="ico-sm" viewBox="0 0 24 24"><rect x="4" y="11" width="16" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg><input id="login-pass" type="password" placeholder="••••••••" required><button id="toggle-login-pass" class="pass-toggle" type="button" onclick="toggleLoginPass()" aria-label="Mostrar senha"><svg id="eye-open" class="ico-sm" viewBox="0 0 24 24"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6z"/><circle cx="12" cy="12" r="3"/></svg><svg id="eye-closed" class="ico-sm" viewBox="0 0 24 24" style="display:none"><path d="M3 3l18 18"/><path d="M10.6 10.6a2 2 0 0 0 2.8 2.8"/><path d="M9.9 5.1A11.8 11.8 0 0 1 12 5c6.5 0 10 7 10 7a17 17 0 0 1-4 4.8"/><path d="M6.2 6.2C3.7 8 2 12 2 12s3.5 6 10 6c1 0 2-.1 2.8-.4"/></svg></button></div>
+        </div>
+        <div class="authrow">
+          <label><input type="checkbox" style="accent-color:#1E4E58"> Lembrar de mim</label>
+          <a href="#">Esqueci a senha</a>
+        </div>
+        <div class="authrow" style="margin-top:-10px;margin-bottom:12px;align-items:flex-start">
+          <label style="line-height:1.4"><input id="login-lgpd" type="checkbox" style="accent-color:#1E4E58"> Concordo com a Política de Privacidade e o tratamento de dados pessoais (LGPD).</label>
+        </div>
+        <div id="login-lgpd-err" style="display:none;background:#FFF4E5;border:1px solid #F1D1A3;color:#8A5A14;font-size:12px;font-weight:500;padding:10px 13px;border-radius:10px;margin-bottom:14px">Para continuar, aceite os termos de privacidade (LGPD).</div>
+        <div id="login-err" style="display:none;background:#FBE9E8;border:1px solid #F1C9C7;color:#C23C3A;font-size:12.5px;font-weight:500;padding:10px 13px;border-radius:10px;margin-bottom:14px">E-mail ou senha incorretos. Verifique e tente novamente.</div>
+        <button type="submit" class="authsubmit">Entrar <svg class="ico-sm" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+        <div class="divider">ou continue com</div>
+        <button type="button" class="ssobtn"><svg class="ico-sm" viewBox="0 0 24 24" style="stroke:#1E4E58"><path d="M21 8v8a5 5 0 0 1-5 5H8a5 5 0 0 1-5-5V8a5 5 0 0 1 5-5h8a5 5 0 0 1 5 5z"/><path d="M9 12h6M12 9v6"/></svg>Acesso institucional (convênio)</button>
+        <div class="authfine">Acesso restrito a profissionais e pacientes autorizados.</div>
+      </form>
+
+    </div>
+  </div>
+</header>
+
+<!-- RECURSOS -->
+<section class="section" id="recursos">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="sec-tag">Recursos</div>
+      <h2>Uma plataforma completa de ponta a ponta</h2>
+      <p>Da primeira ligação à prescrição assinada, o ORTOPGUIA cobre todo o fluxo do atendimento ortopédico com apoio de inteligência artificial.</p>
+    </div>
+    <div class="feat-grid">
+      <div class="feat"><div class="fi"><svg class="ico-lg" viewBox="0 0 24 24"><rect x="2" y="6" width="13" height="12" rx="2"/><path d="M15 10l6-3v10l-6-3"/></svg></div><h3>Teleconsulta em vídeo</h3><p>Atendimento remoto por chamada de vídeo, com médico e paciente se vendo e ouvindo em tempo real.</p></div>
+      <div class="feat"><div class="fi"><svg class="ico-lg" viewBox="0 0 24 24"><path d="M4 6h16M4 10h16M4 14h10M4 18h13"/></svg></div><h3>Transcrição inteligente</h3><p>A conversa presencial é transcrita em tempo real e convertida automaticamente em anamnese estruturada.</p></div>
+      <div class="feat"><div class="fi"><svg class="ico-lg" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/></svg></div><h3>Agenda visual</h3><p>Linha do tempo do dia, semana e mês, com status de cada paciente: em espera, em atendimento e atendido.</p></div>
+      <div class="feat"><div class="fi"><svg class="ico-lg" viewBox="0 0 24 24"><path d="M14 2v6h6"/><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M9 13l2 2 4-4"/></svg></div><h3>Documentos médicos</h3><p>Prescrições, atestados, relatórios e pedidos de exame emitidos e enviados por WhatsApp ou e-mail.</p></div>
+      <div class="feat"><div class="fi"><svg class="ico-lg" viewBox="0 0 24 24"><path d="M3 21V8l9-5 9 5v13"/><path d="M9 21v-6h6v6"/><path d="M12 8v4M10 10h4"/></svg></div><h3>Encaminhamento cirúrgico</h3><p>Solicitação de cirurgias ortopédicas com fluxo de confirmação pelo médico responsável.</p></div>
+      <div class="feat"><div class="fi"><svg class="ico-lg" viewBox="0 0 24 24"><path d="M21 11.5a8.5 8.5 0 0 1-12.5 7.5L3 21l2-5.5A8.5 8.5 0 1 1 21 11.5z"/></svg></div><h3>Confirmação automática</h3><p>O paciente recebe data, horário e tempo estimado de espera por WhatsApp logo após o agendamento.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- MODALIDADES -->
+<section class="section section-tint" id="modalidades">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="sec-tag">Modalidades</div>
+      <h2>Dois modos de atendimento</h2>
+      <p>Escolha o formato que melhor atende cada caso — ambos com o mesmo padrão de cuidado e documentação.</p>
+    </div>
+    <div class="modes">
+      <div class="mode tele">
+        <div class="mi"><svg class="ico-lg" viewBox="0 0 24 24"><rect x="2" y="6" width="13" height="12" rx="2"/><path d="M15 10l6-3v10l-6-3"/></svg></div>
+        <h3>Teleconsulta</h3>
+        <p>Consulta por chamada de vídeo após agendamento por telefone. Ideal para triagem, retornos e orientações.</p>
+        <ul>
+          <li><svg class="ico-sm ck" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>Agendamento por telefone com coleta de queixa, CPF e plano</li>
+          <li><svg class="ico-sm ck" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>Confirmação por WhatsApp com horário e tempo de espera</li>
+          <li><svg class="ico-sm ck" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>Vídeo em tempo real entre médico e paciente</li>
+          <li><svg class="ico-sm ck" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>Documentos enviados por WhatsApp ou e-mail</li>
+        </ul>
+      </div>
+      <div class="mode pres">
+        <div class="mi"><svg class="ico-lg" viewBox="0 0 24 24"><path d="M3 21V8l9-5 9 5v13"/><path d="M9 21v-6h6v6"/><path d="M12 8v4M10 10h4"/></svg></div>
+        <h3>Consulta Presencial</h3>
+        <p>Atendimento no consultório com transcrição em tempo real e anamnese estruturada gerada automaticamente.</p>
+        <ul>
+          <li><svg class="ico-sm ck" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>Transcrição da conversa convertida em anamnese</li>
+          <li><svg class="ico-sm ck" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>Prescrição, atestado, relatório e pedido de exames</li>
+          <li><svg class="ico-sm ck" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>Solicitação de cirurgia ortopédica</li>
+          <li><svg class="ico-sm ck" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>Documentos para impressão ou envio por WhatsApp</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- COMO FUNCIONA -->
+<section class="section" id="como">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="sec-tag">Como funciona</div>
+      <h2>Do agendamento ao atendimento</h2>
+      <p>Um fluxo simples e organizado para pacientes e equipe médica.</p>
+    </div>
+    <div class="steps">
+      <div class="step"><div class="n">1</div><h4>Solicitação</h4><p>O paciente entra em contato e informa queixa, nome, CPF e número do plano.</p></div>
+      <div class="step"><div class="n">2</div><h4>Confirmação</h4><p>A plataforma envia por WhatsApp a data, o horário e o tempo estimado de espera.</p></div>
+      <div class="step"><div class="n">3</div><h4>Atendimento</h4><p>Consulta por vídeo (tele) ou presencial com transcrição e anamnese automática.</p></div>
+      <div class="step"><div class="n">4</div><h4>Documentos</h4><p>Prescrições, atestados e pedidos emitidos e enviados ao paciente na hora.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA BAND -->
+<section class="section">
+  <div class="wrap">
+    <div class="ctaband">
+      <h2>Pronto para começar?</h2>
+      <p>Acesse a plataforma ORTOPGUIA e gerencie seus atendimentos ortopédicos com apoio de IA.</p>
+      <a href="#acesso" class="btn btn-lg">Acessar agora <svg class="ico-sm" viewBox="0 0 24 24" style="stroke:#13404A"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+      <a href="https://wa.me/5521994626336?text=Olá!%20Quero%20agendar%20teleconsulta%20e%20entender%20as%20automações%20de%20marcação%20de%20pacientes." target="_blank" rel="noopener noreferrer" class="btn btn-ghost btn-lg" style="margin-top:10px">WhatsApp: +55 21 99462-6336</a>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="wrap">
+    <div class="foot-grid">
+      <div class="foot-about">
+        <a href="#" class="logo">
+          <div class="ic"><svg viewBox="0 0 64 64"><path d="M44 20a16 16 0 1 0 0 24" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round"/><line x1="44" y1="26" x2="44" y2="38" stroke="#C99746" stroke-width="4.5" stroke-linecap="round"/><line x1="38" y1="32" x2="50" y2="32" stroke="#9FD3BE" stroke-width="4.5" stroke-linecap="round"/></svg></div>
+          <div><div class="nm"><span class="orto">ORTOP</span><span class="gu">GU</span><span class="ia"><span class="i-dot">I</span>A</span></div><div class="sb">Saúde Digital</div></div>
+        </a>
+        <p>Atendimento ortopédico inicial guiado por inteligência artificial. Teleconsulta e consulta presencial em uma só plataforma.</p>
+      </div>
+      <div class="foot-col"><h5>Plataforma</h5><a href="#recursos">Recursos</a><a href="#modalidades">Modalidades</a><a href="#como">Como funciona</a><a href="#acesso">Acessar</a></div>
+      <div class="foot-col"><h5>Institucional</h5><a href="#">Sobre</a><a href="#">Convênios</a><a href="https://wa.me/5521994626336?text=Olá!%20Tenho%20interesse%20em%20teleconsultas%20e%20automações%20de%20marcação%20de%20pacientes." target="_blank" rel="noopener noreferrer">Contato (WhatsApp)</a><a href="#">Trabalhe conosco</a></div>
+      <div class="foot-col"><h5>Legal</h5><a href="#">Termos de uso</a><a href="#">Privacidade (LGPD)</a><a href="#">Segurança</a></div>
+    </div>
+    <div class="foot-bottom">
+      <span>© 2026 ORTOPGUIA Saúde Digital. Todos os direitos reservados.</span>
+      <span class="dom">ortopguia.com.br | ortopguia.com</span>
+    </div>
+  </div>
+</footer>
+
+<a class="wa-float" href="https://wa.me/5521994626336?text=Olá!%20Quero%20agendar%20teleconsulta%20e%20conhecer%20as%20automações%20de%20marcação%20de%20pacientes." target="_blank" rel="noopener noreferrer" aria-label="Falar no WhatsApp sobre teleconsulta e agendamento">
+  <svg class="ico-wa" viewBox="0 0 24 24"><path d="M21 11.5a8.5 8.5 0 0 1-12.5 7.5L3 21l2-5.5A8.5 8.5 0 1 1 21 11.5z"/><path d="M8.8 9.3c.2-.5.5-.5.8-.5h.7c.2 0 .4.1.5.4l.5 1.2c.1.2.1.4 0 .6l-.4.7c-.1.2-.1.4 0 .6.3.5.8 1.1 1.5 1.6.6.5 1.2.8 1.8 1 .2.1.4 0 .6-.1l.8-.5c.2-.1.4-.1.6 0l1.1.6c.2.1.3.3.3.5v.7c0 .3-.1.6-.5.8-.6.3-1.5.4-2.5.1-1.1-.3-2.1-.9-3.1-1.7-1-.8-1.8-1.8-2.3-2.9-.5-1-.7-2-.4-2.8z"/></svg>
+  <span class="txt">WhatsApp Teleconsulta</span>
+</a>
+
+<script>
+function toggleLoginPass(){
+  var input=document.getElementById("login-pass");
+  var button=document.getElementById("toggle-login-pass");
+  var eyeOpen=document.getElementById("eye-open");
+  var eyeClosed=document.getElementById("eye-closed");
+  if(!input||!button) return;
+  var show=input.type==="password";
+  input.type=show?"text":"password";
+  button.setAttribute("aria-label",show?"Ocultar senha":"Mostrar senha");
+  if(eyeOpen&&eyeClosed){
+    eyeOpen.style.display=show?"none":"block";
+    eyeClosed.style.display=show?"block":"none";
+  }
+}
+
+function switchAuth(mode){
+  var tabLogin=document.getElementById("tab-login");
+  var formLogin=document.getElementById("form-login");
+  var login=mode!=="signup";
+  if(tabLogin)tabLogin.className=login?"on":"";
+  if(formLogin)formLogin.style.display=login?"block":"none";
+}
+
+function authBaseCandidates(){
+  var isLocal=window.location.hostname==="localhost"||window.location.hostname==="127.0.0.1";
+  if(isLocal)return["http://localhost:8787"];
+  return [
+    "https://api.ortopguia.com.br",
+    window.location.origin
+  ];
+}
+
+function selectedProfile(){
+  var checked=document.querySelector('input[name="login-profile"]:checked');
+  return checked?checked.value:"medico";
+}
+
+function refreshProfileHelp(){
+  var el=document.getElementById("login-profile-help");
+  if(!el)return;
+  var profile=selectedProfile();
+  el.textContent=profile==="secretaria"
+    ?"Secretaria: sec.mariana@ortopguia.com.br"
+    :"Médico: thiagolima@ortopguia.com.br ou tiagocareno@ortopguia.com.br";
+}
+
+function localAuthUsers(){
+  return [
+    {
+      id:"med_thiago_lima",
+      email:"thiagolima@ortopguia.com.br",
+      role:"medico",
+      name:"Thiago Lima",
+      password:"TEMP_ALTERAR_001"
+    },
+    {
+      id:"med_tiago_careno",
+      email:"tiagocareno@ortopguia.com.br",
+      role:"medico",
+      name:"Tiago Careno",
+      password:"TEMP_ALTERAR_002"
+    },
+    {
+      id:"sec_mariana",
+      email:"sec.mariana@ortopguia.com.br",
+      role:"secretaria",
+      name:"Mariana (Secretaria)",
+      password:"TEMP_ALTERAR_003"
+    }
+  ];
+}
+
+function loginViaLocalFallback(email,password,profile){
+  var users=localAuthUsers();
+  var safeEmail=String(email||"").trim().toLowerCase();
+  var safePassword=String(password||"");
+  var safeProfile=String(profile||"medico").trim().toLowerCase();
+  var found=users.find(function(u){
+    return u.email===safeEmail && u.password===safePassword && u.role===safeProfile;
+  });
+  if(!found)return Promise.reject(new Error("invalid_credentials"));
+  return Promise.resolve({
+    base:"local-fallback",
+    data:{
+      data:{
+        user:{
+          id:found.id,
+          email:found.email,
+          role:found.role,
+          name:found.name
+        },
+        accessToken:"local-demo-token"
+      }
+    }
+  });
+}
+
+function loginViaBackend(email,password,lgpdAccepted,profile){
+  var candidates=authBaseCandidates();
+  var i=0;
+  function next(){
+    if(i>=candidates.length)return Promise.reject(new Error("backend_unreachable"));
+    var base=candidates[i++];
+    return fetch(base+"/api/auth/login",{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({email:email,password:password,lgpdAccepted:!!lgpdAccepted,profile:profile})
+    }).then(function(r){
+      if(!r.ok){
+        if(r.status===401||r.status===400||r.status===403)return Promise.reject(new Error("invalid_credentials"));
+        return next();
+      }
+      return r.json().then(function(j){
+        return {base:base,data:j||{}};
+      });
+    }).catch(function(err){
+      if(err&&err.message==="invalid_credentials")throw err;
+      return next();
+    });
+  }
+  return next();
+}
+
+function submitAuth(e,mode){
+  e.preventDefault();
+  var SESSION_TTL_HOURS=8;
+  var consentAt=new Date().toISOString();
+  var email=(document.getElementById("login-email").value||"").trim().toLowerCase();
+  var pass=document.getElementById("login-pass").value||"";
+  var profile=selectedProfile();
+  var err=document.getElementById("login-err");
+  var lgpdErr=document.getElementById("login-lgpd-err");
+  var lgpdOk=!!(document.getElementById("login-lgpd")&&document.getElementById("login-lgpd").checked);
+  if(lgpdErr)lgpdErr.style.display=lgpdOk?"none":"block";
+  if(!lgpdOk){if(err)err.style.display="none";return false;}
+  try{localStorage.removeItem("ortopguia:session")}catch(_e){}
+  loginViaBackend(email,pass,lgpdOk,profile)
+    .catch(function(){
+      return loginViaLocalFallback(email,pass,profile);
+    })
+    .then(function(resp){
+      err.style.display="none";
+      var sessionSaved=false;
+      try{
+        var now=Date.now();
+        var payload=(resp&&resp.data)||{};
+        var authData=(payload&&payload.data&&typeof payload.data==="object")?payload.data:payload;
+        var user=(authData&&authData.user)||{};
+        var token=(authData&&authData.accessToken)||"";
+        if(!token||!user.email||!user.role)throw new Error("invalid_auth_payload");
+        localStorage.setItem("ortopguia:session",JSON.stringify({
+          email:user.email||email,
+          role:user.role||"paciente",
+          name:user.name||"Usuário",
+          uid:user.id||"",
+          sid:"sess_"+Math.random().toString(36).slice(2,10),
+          at:new Date(now).toISOString(),
+          expiresAt:new Date(now+SESSION_TTL_HOURS*60*60*1000).toISOString(),
+          lgpdAccepted:true,
+          lgpdAcceptedAt:consentAt,
+          accessToken:token,
+          authBaseUrl:resp.base||""
+        }));
+        sessionSaved=true;
+      }catch(x){
+        sessionSaved=false;
+      }
+      if(!sessionSaved){
+        err.style.display="block";
+        return;
+      }
+      window.location.href="app.html";
+    })
+    .catch(function(){
+      err.style.display="block";
+    });
+  return false;
+}
+
+document.querySelectorAll('input[name="login-profile"]').forEach(function(r){
+  r.addEventListener("change",refreshProfileHelp);
+});
+refreshProfileHelp();
+</script>
+<script>(function(){
+  function applyPatch(){
+    if(typeof printCurrentDoc!=='function'){setTimeout(applyPatch,100);return;}
+    if(window.printCurrentDoc._patched)return;
+    window.printCurrentDoc=function(mode,id){
+      var c=currentDocState(mode,id);
+      if(!c.text){alert('Documento vazio para impressão.');return;}
+      var ef=typeof esc==='function'?esc:function(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');};
+      var html='<!doctype html><html><head><meta charset="utf-8"><title>'+ef(c.doc.l)+'</title><style>body{font-family:Inter,Segoe UI,sans-serif;padding:24px;color:#1f2a30;margin:0}pre{white-space:pre-wrap;line-height:1.6;font-size:12px;font-family:inherit}@media print{body{padding:16px}}</style></head><body><pre>'+ef(c.text)+'</pre></body></html>';
+      var ex=document.getElementById('_orto_pf');
+      if(ex)ex.parentNode.removeChild(ex);
+      var f=document.createElement('iframe');
+      f.id='_orto_pf';
+      f.style.cssText='position:fixed;top:-9999px;left:-9999px;width:900px;height:700px;border:none;visibility:hidden';
+      document.body.appendChild(f);
+      f.contentDocument.open();f.contentDocument.write(html);f.contentDocument.close();
+      setTimeout(function(){
+        try{f.contentWindow.focus();f.contentWindow.print();}catch(e){window.print();}
+        setTimeout(function(){var el=document.getElementById('_orto_pf');if(el)el.parentNode.removeChild(el);},5000);
+      },300);
+    };
+    window.printCurrentDoc._patched=true;
+  }
+  if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',applyPatch);}
+  else{applyPatch();}
+})();</script>
+<script>
+(function() {
+  function patchAgendaTimeline() {
+    var timeline = document.querySelector('.timeline');
+    var ptlist = document.querySelector('.ptlist');
+    if (!timeline || !ptlist) return;
+    
+    var ROW = 74;
+    var cards = document.querySelectorAll('.ptcard');
+    if (!cards.length) return;
+    
+    var times = [];
+    cards.forEach(function(c) {
+      var t = (c.querySelector('.mtime .t') || {}).textContent || '';
+      t = t.trim();
+      var parts = t.split(':');
+      var h = parseInt(parts[0] || 0);
+      var m = parseInt(parts[1] || 0);
+      if (!isNaN(h)) times.push({ h: h, m: m, text: t });
+    });
+    
+    if (!times.length) return;
+    
+    // Build rows: one per appointment, label only at hour boundaries
+    var rows = '';
+    var lastLabeledHour = -1;
+    times.forEach(function(t, i) {
+      var showLabel = (i === 0) || (t.h !== lastLabeledHour && t.m === 0);
+      if (showLabel) lastLabeledHour = t.h;
+      rows += '<div class="tl-row"><span class="hr">' + (showLabel ? t.text : '') + '</span></div>';
+    });
+    
+    // Current time red line
+    var now = new Date();
+    var curH = now.getHours();
+    var curM = now.getMinutes();
+    var ts = String(curH).padStart(2, '0') + ':' + String(curM).padStart(2, '0');
+    var curMin = curH * 60 + curM;
+    var firstMin = times[0].h * 60 + times[0].m;
+    var lastMin = times[times.length - 1].h * 60 + times[times.length - 1].m;
+    
+    var nowMark = '';
+    if (curMin >= firstMin - 60 && curMin <= lastMin + 60) {
+      var idx = 0;
+      for (var k = 0; k < times.length; k++) {
+        var m = times[k].h * 60 + times[k].m;
+        if (curMin >= m) {
+          if (k < times.length - 1) {
+            var m2 = times[k + 1].h * 60 + times[k + 1].m;
+            idx = k + Math.min((curMin - m) / (m2 - m || 1), 1);
+          } else {
+            idx = k;
+          }
+        }
+      }
+      var topPx = idx * (ROW + 8) + 10 + (ROW / 2);
+      nowMark = '<div style="position:absolute;left:0;right:0;top:' + topPx + 'px;display:flex;align-items:center;gap:4px;z-index:10;pointer-events:none">' +
+        '<div style="width:7px;height:7px;border-radius:50%;background:#D8504E;flex-shrink:0;margin-left:2px"></div>' +
+        '<div style="font-size:9px;color:#D8504E;font-weight:700;white-space:nowrap;min-width:32px">' + ts + '</div>' +
+        '<div style="flex:1;height:2px;background:#D8504E;opacity:0.7"></div>' +
+        '</div>';
+    }
+    
+    timeline.innerHTML = '<div class="tl-vline"></div>' + nowMark + rows;
+    timeline._patched = true;
+  }
+  
+  // Watch for agenda DOM changes
+  var observer = new MutationObserver(function(mutations) {
+    for (var i = 0; i < mutations.length; i++) {
+      for (var j = 0; j < mutations[i].addedNodes.length; j++) {
+        var node = mutations[i].addedNodes[j];
+        if (node.nodeType === 1) {
+          if (node.classList && (node.classList.contains('agwrap') || node.classList.contains('timeline'))) {
+            setTimeout(patchAgendaTimeline, 50);
+            return;
+          }
+          if (node.querySelector && node.querySelector('.agwrap')) {
+            setTimeout(patchAgendaTimeline, 50);
+            return;
+          }
+        }
+      }
+    }
+  });
+  
+  observer.observe(document.body || document.documentElement, {
+    childList: true,
+    subtree: true
+  });
+  
+  // Also patch every minute to update the current time line
+  setInterval(function() {
+    var tl = document.querySelector('.timeline');
+    if (tl && tl._patched) patchAgendaTimeline();
+  }, 60000);
+  
+  // Initial patch if agenda is already visible
+  setTimeout(patchAgendaTimeline, 200);
+  
+  window._agendaTimelinePatchActive = true;
+})();
+</script>
+
+
+<script>
+(function() {
+  var DOC_NAMES = {pres:'Prescricao',atestado:'Atestado',exames:'Pedido de Exames',cirurgia:'Pedido Cirurgico',terapias:'Terapias'};
+  var DR = 'Thiago Lopes';
+
+  function removeModal() {
+    var o = document.getElementById('_sgn_ov');
+    if (o) o.remove();
+  }
+
+  function showModal(html) {
+    removeModal();
+    var ov = document.createElement('div');
+    ov.id = '_sgn_ov';
+    ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:99999;display:flex;align-items:center;justify-content:center';
+    var box = document.createElement('div');
+    box.style.cssText = 'background:#fff;border-radius:16px;padding:28px 32px;max-width:440px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,.3)';
+    box.innerHTML = html;
+    ov.appendChild(box);
+    ov.addEventListener('click', function(e) { if (e.target === ov) removeModal(); });
+    document.body.appendChild(ov);
+    ov.querySelectorAll('[data-sgn-close]').forEach(function(b) { b.onclick = removeModal; });
+    return ov;
+  }
+
+  function loading(msg) {
+    showModal('<div style="text-align:center;padding:20px"><div style="font-size:32px">&#9203;</div><div style="font-size:16px;font-weight:600;color:#1E4E58;margin:12px 0">' + msg + '</div></div>');
+  }
+
+  function errModal(msg) {
+    showModal('<div style="text-align:center;padding:20px"><div style="font-size:32px">&#10060;</div><div style="color:#D8504E;font-weight:600;margin:12px 0">' + msg + '</div><button data-sgn-close style="background:#1E4E58;color:#fff;border:none;border-radius:10px;padding:12px 24px;cursor:pointer">OK</button></div>');
+  }
+
+  async function genPdf() {
+    var el = null;
+    var cs = document.querySelectorAll('.docpanel,[class*="docpanel"]');
+    for (var c of cs) { if (c.offsetParent !== null && c.style.display !== 'none') { el = c; break; } }
+    if (!el) {
+      var tmp = document.createElement('div');
+      tmp.style.cssText = 'position:fixed;left:-9999px;top:0;width:794px;background:#fff;padding:40px;font-family:Arial;font-size:13px';
+      tmp.innerHTML = '<h2 style="color:#1E4E58">Documento Medico - ORTOPGUIA</h2><p>Dr. ' + DR + '</p><p>Data: ' + new Date().toLocaleDateString('pt-BR') + '</p>';
+      document.body.appendChild(tmp);
+      el = tmp;
+    }
+    var canvas = await html2canvas(el, { scale: 2, useCORS: true, backgroundColor: '#fff' });
+    var jsPDF = window.jspdf.jsPDF;
+    var pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+    var w = 210, h = (canvas.height * w) / canvas.width, ph = 297, y = 0;
+    while (y < h) {
+      if (y > 0) pdf.addPage();
+      var sy = (y / h) * canvas.height;
+      var sh = Math.min((ph / h) * canvas.height, canvas.height - sy);
+      var tc = document.createElement('canvas');
+      tc.width = canvas.width; tc.height = sh;
+      tc.getContext('2d').drawImage(canvas, 0, sy, canvas.width, sh, 0, 0, canvas.width, sh);
+      pdf.addImage(tc.toDataURL('image/jpeg', .92), 'JPEG', 0, 0, w, Math.min(ph, h - y));
+      y += ph;
+    }
+    return pdf.output('blob');
+  }
+
+  function dlPdf(blob, name) {
+    var u = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = u; a.download = name + '.pdf';
+    document.body.appendChild(a); a.click();
+    setTimeout(function() { URL.revokeObjectURL(u); a.remove(); }, 3000);
+  }
+
+  function showAutentiqueResult() {
+    showModal(
+      '<div style="text-align:center;margin-bottom:16px"><div style="font-size:36px">&#128272;</div>' +
+      '<h3 style="color:#1E4E58;margin:10px 0 6px;font-size:18px">PDF baixado!</h3>' +
+      '<p style="color:#666;font-size:13px;margin:0 0 16px">Faca upload na Autentique para assinar</p></div>' +
+      '<a href="https://painel.autentique.com.br/documentos/novo" target="_blank" style="display:block;background:#1E4E58;color:#fff;text-decoration:none;text-align:center;border-radius:10px;padding:14px;font-size:15px;font-weight:600;margin-bottom:10px">Abrir Autentique - Novo Documento</a>' +
+      '<div style="background:#f0f7f4;border-radius:8px;padding:12px 14px;font-size:12px;color:#1E4E58;margin-bottom:12px;line-height:1.6">1. Clique em Abrir Autentique<br>2. Faca upload do PDF baixado<br>3. Adicione-se como signatario<br>4. Assine com 1 clique!</div>' +
+      '<button data-sgn-close style="width:100%;background:#f4f4f4;color:#666;border:none;border-radius:10px;padding:12px;font-size:13px;cursor:pointer">Fechar</button>'
+    );
+  }
+
+  function showGovbrResult() {
+    showModal(
+      '<div style="text-align:center;margin-bottom:16px"><div style="font-size:36px">&#127463;&#127479;</div>' +
+      '<h3 style="color:#1351B4;margin:10px 0 6px;font-size:18px">PDF baixado!</h3>' +
+      '<p style="color:#666;font-size:13px;margin:0">Acesse o portal gov.br para assinar</p></div>' +
+      '<a href="https://assinador.iti.gov.br/assinatura/index.xhtml" target="_blank" style="display:block;background:#1351B4;color:#fff;text-decoration:none;text-align:center;border-radius:10px;padding:14px;font-size:15px;font-weight:600;margin-bottom:10px">Abrir Portal Gov.br</a>' +
+      '<div style="background:#EEF2FB;border-radius:8px;padding:10px 14px;font-size:12px;color:#1351B4;margin-bottom:12px">Faca upload do PDF e assine com conta gov.br nivel prata ou ouro</div>' +
+      '<button data-sgn-close style="width:100%;background:#f4f4f4;color:#666;border:none;border-radius:10px;padding:12px;font-size:13px;cursor:pointer">Fechar</button>'
+    );
+  }
+
+  window.ortopSign = function(mode) {
+    var dn = DOC_NAMES[mode] || 'Documento';
+    var fn = dn + ' - Dr. ' + DR + ' - ' + new Date().toLocaleDateString('pt-BR');
+
+    showModal(
+      '<div style="text-align:center;margin-bottom:20px"><div style="font-size:28px">&#9997;&#65039;</div>' +
+      '<h3 style="color:#1E4E58;margin:8px 0 4px;font-size:18px">Assinar Documento</h3>' +
+      '<p style="color:#8A969B;font-size:13px;margin:0">' + dn + '</p></div>' +
+      '<div style="display:flex;flex-direction:column;gap:12px">' +
+      '<button id="_bA" style="background:#1E4E58;color:#fff;border:none;border-radius:10px;padding:14px 20px;font-size:14px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:10px;width:100%"><span style="font-size:20px">&#128272;</span><div style="text-align:left"><div>Assinar via Autentique</div><div style="font-size:11px;font-weight:400;opacity:.85">Assinatura eletronica gratis</div></div></button>' +
+      '<button id="_bG" style="background:#1351B4;color:#fff;border:none;border-radius:10px;padding:14px 20px;font-size:14px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:10px;width:100%"><span style="font-size:20px">&#127463;&#127479;</span><div style="text-align:left"><div>Assinar via Gov.br</div><div style="font-size:11px;font-weight:400;opacity:.85">Assinatura digital ICP-Brasil</div></div></button>' +
+      '<button data-sgn-close style="background:#f4f4f4;color:#666;border:none;border-radius:10px;padding:12px 20px;font-size:13px;cursor:pointer">Cancelar</button>' +
+      '</div>'
+    );
+
+    document.getElementById('_bA').onclick = async function() {
+      loading('Gerando PDF...');
+      try { var b = await genPdf(); dlPdf(b, fn); setTimeout(showAutentiqueResult, 800); }
+      catch(e) { errModal(e.message); }
+    };
+
+    document.getElementById('_bG').onclick = async function() {
+      loading('Gerando PDF...');
+      try { var b = await genPdf(); dlPdf(b, fn); setTimeout(showGovbrResult, 800); }
+      catch(e) { errModal(e.message); }
+    };
+  };
+
+  function getModeFromOnclick(onclick) {
+    var idx = onclick.indexOf('printCurrentDoc');
+    if (idx < 0) return 'atestado';
+    var sub = onclick.substring(idx + 16);
+    var commaIdx = sub.indexOf(',');
+    if (commaIdx < 0) return 'atestado';
+    var afterComma = sub.substring(commaIdx + 1).replace(/[^a-zA-Z]/g, '');
+    return afterComma.substring(0, 20) || 'atestado';
+  }
+
+  function injectBtns() {
+    document.querySelectorAll('[onclick*="printCurrentDoc"]').forEach(function(btn) {
+      if (btn.dataset.sgnInj) return;
+      btn.dataset.sgnInj = '1';
+      var oc = btn.getAttribute('onclick') || '';
+      var mode = getModeFromOnclick(oc);
+      var sb = document.createElement('button');
+      sb.className = btn.className;
+      sb.title = 'Assinar digitalmente';
+      sb.style.cssText = 'margin-left:6px;background:#1E4E58;color:#fff;border:none;border-radius:8px;padding:0 14px;font-size:12px;font-weight:600;cursor:pointer;height:36px;display:inline-flex;align-items:center;gap:6px';
+      sb.innerHTML = '&#9997;&#65039; Assinar';
+      sb.onclick = function() { window.ortopSign(mode); };
+      if (btn.nextSibling) btn.parentNode.insertBefore(sb, btn.nextSibling);
+      else btn.parentNode.appendChild(sb);
+    });
+  }
+
+  var obs = new MutationObserver(injectBtns);
+  obs.observe(document.documentElement, { childList: true, subtree: true });
+  setTimeout(injectBtns, 500);
+  window._ortopSignActive = true;
+})();
+</script></body>
+</html>

@@ -21,106 +21,86 @@
   button{font-family:inherit;cursor:pointer}
   input,select,textarea{font-family:inherit;outline:none}
   input:focus,select:focus,textarea:focus{border-color:#1E4E58!important}
-  /* duplicate triageWidget accidentally inserted into style
-    var t=triageModeState(mode)||makeTriageState();
-    var decision=triageClinicalDecision(mode);
-    var currentView=t.bodyView||"front";
-    var accessibility=(t.accessibility&&typeof t.accessibility==="object")?t.accessibility:{contrast:false,touch:false};
-    var contrastOn=!!accessibility.contrast;
-    var touchOn=!!accessibility.touch;
-    var qhtml="";
-    TRIAGE_QUESTIONS.forEach(function(q){
-      var opts="";
-      q.opts.forEach(function(o){
-        var on=(t.answers&&t.answers[q.key]===o[0]);
-        opts+='<button class="'+(on?'on':'')+'" onclick="triageSetAnswer(\''+mode+'\',\''+q.key+'\',\''+o[0]+'\')">'+o[1]+'</button>';
-      });
-      qhtml+='<div class="triage-q"><div class="q">'+q.label+'</div><div class="triage-opts">'+opts+'</div></div>';
-    });
-    var pain=Number(t.painScale||0);
-    var evaButtons="";
-    for(var pi=0;pi<=10;pi++)evaButtons+='<button class="'+(pain===pi?'on':'')+'" onclick="triageSetPain(\''+mode+'\','+pi+')">'+pi+'</button>';
-    var scaleBlock='<div class="triage-scale"><div class="lbl">Escala visual analógica da dor (EVA)</div><div class="bar"></div><div class="eva">'+evaButtons+'</div><div class="legend"><span>Sem dor</span><span>Pior dor</span></div></div>';
-    var rfButtons="";
-    RED_FLAG_ITEMS.forEach(function(r){
-      var on=!!(t.redFlags&&t.redFlags[r.id]);
-      rfButtons+='<button class="'+(on?'on':'')+'" onclick="triageToggleRedFlag(\''+mode+'\',\''+r.id+'\')">'+r.label+'</button>';
-    });
-    var redFlagsBlock='<div class="redflags"><div class="ttl">Red flags e critérios de urgência</div><div class="grid">'+rfButtons+'</div></div>';
-    var segGroups={};
-    ORTHO_SEGMENT_ITEMS.forEach(function(it){
-      if(!segGroups[it.segmento])segGroups[it.segmento]=[];
-      segGroups[it.segmento].push(it);
-    });
-    var segHtml="";
-    Object.keys(segGroups).forEach(function(segName){
-      var opts="";
-      segGroups[segName].forEach(function(it){
-        var on=!!(t.segmentChecks&&t.segmentChecks[it.id]);
-        opts+='<button class="'+(on?'on':'')+'" onclick="triageToggleSegmentCheck(\''+mode+'\',\''+it.id+'\')">'+it.label+'</button>';
-      });
-      segHtml+='<div class="g"><div class="gl">'+segName+'</div><div class="opts">'+opts+'</div></div>';
-    });
-    var segmentBlock='<div class="segment-checks"><div class="ttl">Checklist ortopédico por segmento (opcional)</div>'+segHtml+'</div>';
-    var tabs='<div class="mini-tabs"><button class="'+(currentView!=="back"?"on":"")+'" onclick="triageSetBodyView(\''+mode+'\',\'front\')">Frente</button><button class="'+(currentView==="back"?"on":"")+'" onclick="triageSetBodyView(\''+mode+'\',\'back\')">Costas</button></div>';
-    var markedSegments=Object.keys(t.segmentMarks||{}).filter(function(k){return !!t.segmentMarks[k];}).map(function(id){return BODY_SEGMENT_BY_ID[id];}).filter(Boolean);
-    var segmentAreas="";
-    BODY_SEGMENTS.forEach(function(s){
-      if(s.view!==currentView)return;
-      var marked=triageSegmentMarked(t,s.id);
-      segmentAreas+='<button class="segment-area '+(marked?'marked':'')+'" style="left:'+s.x+'%;top:'+s.y+'%;width:'+s.w+'%;height:'+s.h+'%" title="'+s.label+'" onclick="triageToggleSegmentMark(\''+mode+'\',\''+s.id+'\')"></button>';
-    });
-    var segmentHotspots="";
-    BODY_MARKERS.forEach(function(marker){
-      if(marker.view!==currentView)return;
-      var marked=markerMarked(t,marker);
-      var calibrationState=t.calibration||{active:false,markerId:""};
-      var selectedCalibration=calibrationState.active&&calibrationState.markerId===marker.id;
-      var cx=Number(marker.x||50),cy=Number(marker.y||50),count=0,sumx=0,sumy=0;
-      (marker.segments||[]).forEach(function(segId){
-        var seg=BODY_SEGMENT_BY_ID[segId];
-        if(!seg||seg.view!==currentView)return;
-        sumx+=Number(seg.x||0)+Number(seg.w||0)/2;
-        sumy+=Number(seg.y||0)+Number(seg.h||0)/2;
-        count++;
-      });
-      if(count){cx=sumx/count;cy=sumy/count;}
-      var id=String(marker.id||"");
-      var anchor=markerAnchorPosition(id,currentView);
-      if(anchor){
-        cx=anchor.x;
-        cy=anchor.y;
-      }else{
-        var offset=markerMountOffset(id,currentView);
-        cx+=offset.x;
-        cy+=offset.y;
-      }
-      var calibOffset=markerCalibrationOffset(id);
-      cx+=calibOffset.x;
-      cy+=calibOffset.y;
-      segmentHotspots+='<button class="segment-hotspot '+(marked?'marked':'')+' '+(selectedCalibration?'calib-selected':'')+'" style="left:calc('+cx+'% - 12px);top:calc('+cy+'% - 12px)" title="'+marker.label+'" onclick="triageHandleMarkerClick(\''+mode+'\',\''+marker.id+'\')"></button>';
-    });
-    var calibration=t.calibration||{active:false,markerId:""};
-    var calibrationMarker=calibration.markerId?markerById(calibration.markerId):null;
-    var calibrationOffset=calibrationMarker?markerCalibrationOffset(calibration.markerId):{x:0,y:0};
-    var calibrationPanel='<div class="segment-zoom"><div class="ttl">Calibração anatômica</div><div class="sub">'+(calibration.active?'Clique em um ponto azul/vermelho para selecioná-lo e use as setas para ajustar.':'Ative a calibração para selecionar e ajustar os marcadores.')+'</div><div class="acc-presets"><button class="'+(calibration.active?'on':'')+'" onclick="triageToggleCalibrationMode(\''+mode+'\')">'+(calibration.active?'Calibração ligada':'Ativar calibração')+'</button><button onclick="triageApplyCalibrationPreset(\''+mode+'\')">Aplicar preset anatômico</button><button onclick="triageResetCalibrationSelected(\''+mode+'\')">Zerar selecionado</button><button onclick="triageResetCalibrationAll(\''+mode+'\')">Zerar tudo</button></div><div class="segment-chooser">'+(calibrationMarker?('<button class="on">Selecionado: '+esc(calibrationMarker.label)+'</button>'):'<button class="on">Nenhum marcador selecionado</button>')+'</div><div class="segment-zoom-grid"><button onclick="triageNudgeCalibration(\''+mode+'\',0,-1.5)">↑ subir um passo</button><button onclick="triageNudgeCalibration(\''+mode+'\',0,1.5)">↓ descer um passo</button><button onclick="triageNudgeCalibration(\''+mode+'\',-1.5,0)">← deslocar para dentro</button><button onclick="triageNudgeCalibration(\''+mode+'\',1.5,0)">→ deslocar para fora</button></div><div class="sub" style="margin-top:8px">Deslocamento atual: '+Number(calibrationOffset.x||0).toFixed(1)+' / '+Number(calibrationOffset.y||0).toFixed(1)+'</div></div>';
-    var figureBody='<div class="mini-skeleton '+(currentView==='back'?'back':'front')+'">'+miniSkeletonSvg(currentView==='back'?'back':'front')+'</div><div class="segment-areas">'+segmentAreas+'</div><div class="segment-layer">'+segmentHotspots+'</div>';
-    var zoomPanel='<div class="segment-zoom"><div class="ttl">Pontos de marcação</div><div class="sub">Clique nas bolinhas azuis para marcar dor. A bolinha fica vermelha quando selecionada.</div><div class="acc-presets"><button class="'+(contrastOn?'on':'')+'" onclick="triageToggleAccessibility(\''+mode+'\',\'contrast\')">Alto contraste</button><button class="'+(touchOn?'on':'')+'" onclick="triageToggleAccessibility(\''+mode+'\',\'touch\')">Toque fácil</button><button class="'+(calibration.active?'on':'')+'" onclick="triageToggleCalibrationMode(\''+mode+'\')">Editar marcadores (provisório)</button></div></div>';
-    var marksHtml='';
-    if(markedSegments.length){
-      marksHtml='<div class="marks-panel"><div class="ttl">Áreas machucadas selecionadas</div><div class="count">'+markedSegments.length+' marcação(ões) ativa(s)</div><div class="mark-list">';
-      markedSegments.forEach(function(seg){
-        marksHtml+='<div class="mark-chip"><span class="txt">'+esc(seg.label)+'</span><button class="rm" title="Remover" onclick="triageRemoveSegmentMark(\''+mode+'\',\''+seg.id+'\')">×</button></div>';
-      });
-      marksHtml+='</div></div>';
-    }else{
-      marksHtml='<div class="marks-panel"><div class="ttl">Áreas machucadas selecionadas</div><div class="mark-empty">Nenhuma área marcada ainda. Você pode marcar múltiplas regiões.</div></div>';
-    }
-    var summary=triageSummaryLines(mode);
-    var summaryHtml=summary.length?summary.join(' · '):'Nenhum dado opcional selecionado ainda.';
-    var decisionBlock='<div class="decision" style="border-color:'+decision.color.bd+'"><div class="h"><div style="font-size:11px;font-weight:700;color:#13404A">Decisão clínica de apoio</div><div class="lights"><span class="l '+(decision.urgencia==="baixa"?'on baixa':'')+'"></span><span class="l '+(decision.urgencia==="moderada"?'on moderada':'')+'"></span><span class="l '+(decision.urgencia==="alta"?'on alta':'')+'"></span></div><div class="tag" style="background:'+decision.color.bg+';color:'+decision.color.tx+'">Urgência '+decision.urgenciaLabel+'</div></div><div class="a">'+decision.action+'</div><div class="meta"><div class="m"><div class="k">Tempo-alvo</div><div class="v">'+decision.tempoAlvo+'</div></div><div class="m"><div class="k">Rota sugerida</div><div class="v">'+decision.encaminhamento+'</div></div></div><div class="b">Ortopedia: '+(decision.ortopedia?'recomendado':'avaliar clinicamente')+' · Cirurgia: '+(decision.cirurgia?'considerar avaliação':'sem indicação imediata')+'</div></div>';
-    return '<div class="triage"><div class="card"><div class="ahead" style="display:block"><div class="tt">'+svg("clipboard","ico-sm")+'Perguntas críticas opcionais</div><div class="ds">Cliques rápidos para red flags, urgência e decisão de encaminhamento</div></div><div class="triage-body"><div class="triage-grid">'+qhtml+'</div>'+scaleBlock+redFlagsBlock+segmentBlock+decisionBlock+'<div class="triage-actions"><div class="hint">Não obrigatório. Apoio rápido para decisão sem perda de tempo.</div><button class="clear" onclick="triageClear(\''+mode+'\')">Limpar seleções</button></div><div class="triage-summary">'+esc(summaryHtml)+'</div></div></div><div class="card"><div class="ahead" style="display:block"><div class="tt">'+svg("user","ico-sm")+'Mini esqueleto segmentado</div><div class="ds">Marcação por pontos: bolinhas azuis ficam vermelhas quando selecionadas</div></div><div class="mini-body">'+tabs+'<div class="mini-figure '+(contrastOn?'acc-contrast ':'')+(touchOn?'acc-touch':'')+'">'+figureBody+'</div>'+zoomPanel+calibrationPanel+marksHtml+'<div class="mini-label">Cobertura completa: coluna, clavículas, costelas, articulações (ombros, cotovelos, punhos/mãos, quadris, joelhos, tornozelos), mãos, pés e membros superiores/inferiores em frente e costas.</div></div></div></div>';
-  }*/
+  /* base layout restored */
+  .app{display:flex;min-height:100vh}
+  .sidebar{width:264px;flex-shrink:0;background:#FFFFFF;border-right:1px solid #E6EDF0;display:flex;flex-direction:column;position:sticky;top:0;height:100vh;padding:18px 14px}
+  .main{flex:1;min-width:0;padding:16px 18px 24px}
+  .mhead{display:none}
+  .bnav{display:none}
+  .topbar{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+  .pill{display:inline-flex;align-items:center;gap:6px;padding:7px 10px;border:1px solid #E6EDF0;border-radius:999px;background:#FFFFFF;color:#566066;font-size:11px;font-weight:600}
+  .logo{display:flex;align-items:center;gap:10px}
+  .logo .ic{width:44px;height:44px;border-radius:14px;background:#1E4E58;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .logo .ic svg{width:24px;height:24px}
+  .logo .nm{font-family:'Sora',sans-serif;font-size:32px;font-weight:700;letter-spacing:-1px;color:#13404A;line-height:1}
+  .logo .nm .gu{color:#1E4E58}
+  .logo .nm .ia{color:#C99746}
+  .logo .nm .i-dot{position:relative}
+  .logo .sb{font-size:11px;letter-spacing:3.2px;text-transform:uppercase;color:#A2ABAE;margin-top:3px}
+  .sb-head{padding-bottom:12px;border-bottom:1px solid #E6EDF0}
+  .sb-tag{font-size:11px;color:#697275;line-height:1.55;margin-top:12px}
+  .sb-nav{display:flex;flex-direction:column;gap:7px;margin-top:14px}
+  .sb-nav button{display:flex;align-items:center;gap:8px;padding:11px 10px;border:1px solid transparent;border-radius:11px;background:transparent;color:#697275;font-size:12px;font-weight:600;text-align:left}
+  .sb-nav button.on{background:#EDF4F1;color:#13404A;border-color:#CFE0D8}
+  .sb-foot{margin-top:auto;padding-top:12px;border-top:1px solid #E6EDF0;display:flex;align-items:center;gap:9px}
+  .sb-foot .av{width:34px;height:34px;border-radius:50%;background:#1E4E58;color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0}
+  .sb-foot .dn{font-size:12px;font-weight:600;color:#33474D;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .sb-foot .dr{font-size:10px;color:#8A969B;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .onl{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border:1px solid #E6EDF0;border-radius:999px;background:#FFFFFF;font-size:11px;color:#697275}
+  .onl .d{width:8px;height:8px;border-radius:50%;background:#2E9E5B}
+  .card{background:#FFFFFF;border:1px solid #E6EDF0;border-radius:12px;box-shadow:0 1px 3px rgba(19,64,74,.03)}
+  .h2{font-family:'Sora',sans-serif;font-size:21px;font-weight:700;color:#13404A;line-height:1.2}
+  .sub{font-size:11px;color:#A2ABAE;margin-top:2px}
+  .row{display:flex;gap:14px;align-items:stretch}
+  .panel{width:340px;max-width:100%}
+  .video{min-height:280px;border-radius:12px;background:#F2F6F8;border:1px solid #E6EDF0;position:relative;display:flex;align-items:center;justify-content:center;padding:16px;overflow:hidden}
+  .ico-lg{width:40px;height:40px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+  .ph{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;color:#6F7A80;text-align:center;width:100%;height:100%}
+  .ph .t{font-size:12px;color:#7A858B;font-weight:600}
+  .tmr{position:absolute;top:10px;left:10px;display:inline-flex;align-items:center;gap:6px;padding:5px 9px;border-radius:999px;background:#FFFFFF;border:1px solid #E6EDF0;font-size:11px;color:#13404A;font-family:'Sora',monospace}
+  .tmr .d{width:7px;height:7px;border-radius:50%;background:#2E9E5B;animation:pulse 1s infinite}
+  .pip{position:absolute;right:10px;bottom:10px;width:34px;height:34px;border-radius:9px;background:#FFFFFF;border:1px solid #E6EDF0;color:#697275;display:flex;align-items:center;justify-content:center}
+  .pblk{background:#FFFFFF;border:1px solid #E6EDF0;border-radius:12px;padding:12px}
+  .ptt{font-size:11px;font-weight:700;color:#13404A;text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px}
+  .ctrls{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .ctrls button{height:42px;border:1px solid #D7E1E5;border-radius:10px;background:#FFFFFF;color:#566066;font-size:11px;font-weight:600;display:flex;align-items:center;justify-content:center;gap:6px}
+  .ctrls button.on{border-color:#1E4E58;background:#EDF4F1;color:#13404A}
+  .ico{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+  .ico-sm{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+  .sb-nav button .ico{width:17px;height:17px}
+  .bnav button .ico{width:16px;height:16px}
+  .sb-nav button span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .bnav{position:fixed;left:0;right:0;bottom:0;height:64px;background:#fff;border-top:1px solid #E6EDF0;padding:6px 8px;align-items:center;justify-content:space-between;z-index:30}
+  .bnav button{flex:1;border:none;background:transparent;border-radius:9px;color:#7A858B;height:50px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:10px;font-weight:600}
+  .bnav button.on{background:#EDF4F1;color:#13404A}
+
+  .legend{display:flex;gap:12px;flex-wrap:wrap}
+  .legend .it{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:#566066}
+  .legend .dot{width:8px;height:8px;border-radius:50%}
+  .agwrap{margin-top:12px;display:grid;grid-template-columns:120px 1fr;gap:12px}
+  .timeline{position:relative;border-right:1px dashed #D5DFE3;padding-right:10px;padding-top:10px}
+  .tl-row{height:74px;display:flex;align-items:flex-start;gap:8px}
+  .tl-row .hr{font-size:11px;color:#8A969B}
+  .tl-row .dot{width:8px;height:8px;border-radius:50%;margin-top:4px}
+  .tl-vline{position:absolute;left:75px;top:8px;bottom:8px;width:2px;background:#E3ECEF}
+  .tl-now{position:absolute;left:72px;display:flex;align-items:center;gap:6px}
+  .tl-now .nd{width:8px;height:8px;border-radius:50%;background:#1E4E58}
+  .tl-now .nl{font-size:10px;color:#1E4E58;font-weight:700}
+  .ptlist{display:flex;flex-direction:column;gap:8px}
+  .ptrow{display:block}
+  .ptcard{width:100%;border:1px solid #E6EDF0;border-radius:11px;background:#fff;padding:12px;display:flex;align-items:flex-start;gap:10px}
+  .ptcard.clickable{cursor:pointer}
+  .ptcard .mtime{min-width:44px}
+  .ptcard .mtime .t{font-size:12px;font-weight:700;color:#13404A}
+  .ptcard .tipo{width:30px;height:30px;border-radius:8px;background:#F2F6F8;display:flex;align-items:center;justify-content:center;color:#607176;flex-shrink:0}
+  .ptcard .nm{font-size:13px;font-weight:700;color:#1F2E33}
+  .ptcard .q{font-size:12px;color:#5F696C;margin-top:2px}
+  .ptcard .meta{font-size:11px;color:#8A969B;margin-top:3px}
+  .badge{padding:5px 8px;border-radius:999px;font-size:10px;font-weight:700;white-space:nowrap}
+  .selst{height:30px;border:1px solid #D7E1E5;border-radius:8px;background:#fff;padding:0 8px;font-size:11px;color:#4D5A5F}
+  .vtabs{display:inline-flex;border:1px solid #E6EDF0;background:#F4F8FA;border-radius:10px;padding:3px;gap:2px;margin-top:8px}
+  .vtabs button{border:none;background:transparent;border-radius:8px;padding:6px 10px;font-size:11px;color:#697275;font-weight:600}
+  .vtabs button.on{background:#fff;color:#13404A;box-shadow:0 1px 3px rgba(19,64,74,.1)}
   .ctrls button.off{border-color:#D8504E;background:#FBE9E8;color:#D8504E}
   .ctrls button .l{font-size:9px;font-weight:600}
   .info .kv{margin-bottom:10px}
@@ -533,9 +513,7 @@ var NAV_MED=[
 {id:"teleconsulta",l:"Teleconsulta",ml:"Tele"},
 {id:"presencial",l:"Cons. Presencial",ml:"Presencial"},
 {id:"interconsulta",l:"Interconsulta Sênior",ml:"Sênior"},
-{id:"assistentes",l:"Assistentes",ml:"Assist."},
-{id:"relatorios",l:"Relatórios",ml:"Relatórios"},
-{id:"lgpd",l:"LGPD",ml:"LGPD"}
+{id:"lgpd",l:"Histórico",ml:"Histórico"}
 ];
 var NAV_SEC=[
 {id:"agenda",l:"Agenda",ml:"Agenda"},
@@ -543,12 +521,13 @@ var NAV_SEC=[
 {id:"lembretes",l:"Lembretes",ml:"Lembretes"}
 ];
 var ROLE_ALLOWED_TABS={
-  medico:["agenda","teleconsulta","presencial","interconsulta","assistentes","relatorios","lgpd"],
+  medico:["agenda","teleconsulta","presencial","interconsulta","lgpd"],
   secretaria:["agenda","agendamento","lembretes"],
   paciente:["agenda"]
 };
 var LGPD_DEFAULT_RETENTION_DAYS=365;
 var PATIENT_STORAGE_KEY="ortopguia:patients";
+var REPOSITORY_MIRROR_KEY="ortopguia:repositoryMirror";
 function canAccessTab(tab){
   var s=getSession()||{};
   var role=s.role||"paciente";
@@ -573,6 +552,16 @@ function loadPatients(){
 }
 function savePatients(){
   try{localStorage.setItem(PATIENT_STORAGE_KEY,JSON.stringify(state.patients.map(normalizePatient)))}catch(e){}
+}
+function loadRepositoryMirror(){
+  try{
+    var raw=localStorage.getItem(REPOSITORY_MIRROR_KEY);
+    var parsed=raw?JSON.parse(raw):{};
+    return parsed&&typeof parsed==="object"?parsed:{};
+  }catch(e){return {}}
+}
+function saveRepositoryMirror(){
+  try{localStorage.setItem(REPOSITORY_MIRROR_KEY,JSON.stringify(state.repoByPatient||{}))}catch(e){}
 }
 function touchPatient(pt){
   if(!pt)return;
@@ -937,60 +926,134 @@ var TRIAGE_VALUE_LABEL=(function(){
 })();
 function makeTriageState(){return {answers:{},spots:[],painScale:0,bodyView:"front",redFlags:{},segmentChecks:{},segmentMarks:{},segmentFocus:"",detailedMarks:{},accessibility:{contrast:false,touch:false},calibration:{active:false,markerId:""}}}
 
-var MARKER_CALIBRATION_STORAGE_KEY="ortopguia:markerCalibrationOffsets";
+var MARKER_CALIBRATION_STORAGE_KEY="ortopguia:markerCalibrationOffsets:v3";
+var MARKER_CALIBRATION_PRESET_STORAGE_KEY="ortopguia:markerCalibrationPreset:v1";
 var markerCalibrationCache=null;
 
-function buildMarkerCalibrationPreset(){
+var MARKER_CALIBRATION_CANONICAL={
+  front_cervical:{x:4.2,y:5.1},
+  front_dorsal:{x:4.6,y:9.6},
+  front_lombar:{x:5,y:3.2},
+  front_sacra:{x:4.6,y:-1.2},
+  front_pelve:{x:4.6,y:-4.5},
+  front_costelas:{x:3.3,y:2},
+  front_costelas_e:{x:5,y:3.5},
+  front_costelas_d:{x:5,y:4},
+  front_clavicula_e:{x:3.4,y:7.8},
+  front_clavicula_d:{x:8,y:7.6},
+  front_ombro_e:{x:-5,y:6.3},
+  front_ombro_d:{x:14.3,y:6.1},
+  front_braco_e:{x:-12.2,y:1.5},
+  front_braco_d:{x:21,y:2.3},
+  front_cotovelo_e:{x:-12.2,y:-0.8},
+  front_cotovelo_d:{x:21,y:-0.8},
+  front_antebraco_e:{x:-10.9,y:-3},
+  front_antebraco_d:{x:20.6,y:-3},
+  front_mao_e:{x:-13,y:-3.3},
+  front_mao_d:{x:21.8,y:-4},
+  front_mao_palmar_e:{x:-13.4,y:-1.3},
+  front_mao_palmar_d:{x:22.3,y:-2.5},
+  front_quadril_e:{x:2.1,y:-5.3},
+  front_quadril_d:{x:8,y:-4.5},
+  front_coxa_e:{x:6.7,y:-8.5},
+  front_coxa_d:{x:4.2,y:-8.3},
+  front_joelho_e:{x:4.6,y:-8.6},
+  front_joelho_d:{x:4.7,y:-8.8},
+  front_perna_e:{x:3.8,y:-5.3},
+  front_perna_d:{x:5,y:-5.5},
+  front_tornozelo_e:{x:1.3,y:-3.3},
+  front_tornozelo_d:{x:4.6,y:-3.5},
+  front_pe_e:{x:0.8,y:-0.8},
+  front_pe_d:{x:7.1,y:-1.5},
+  back_cervical:{x:0,y:0},
+  back_dorsal:{x:0,y:0},
+  back_lombar:{x:0,y:0},
+  back_sacra:{x:0,y:0},
+  back_pelve:{x:0,y:0},
+  back_costelas:{x:0,y:0},
+  back_costelas_e:{x:0,y:0},
+  back_costelas_d:{x:0,y:0},
+  back_clavicula_e:{x:0,y:0},
+  back_clavicula_d:{x:0,y:0},
+  back_ombro_e:{x:0,y:0},
+  back_ombro_d:{x:0,y:0},
+  back_braco_e:{x:0,y:0},
+  back_braco_d:{x:0,y:0},
+  back_cotovelo_e:{x:0,y:0},
+  back_cotovelo_d:{x:0,y:0},
+  back_antebraco_e:{x:0,y:0},
+  back_antebraco_d:{x:0,y:0},
+  back_mao_e:{x:0,y:0},
+  back_mao_d:{x:0,y:0},
+  back_mao_palmar_e:{x:0,y:0},
+  back_mao_palmar_d:{x:0,y:0},
+  back_quadril_e:{x:0,y:0},
+  back_quadril_d:{x:0,y:0},
+  back_coxa_e:{x:0,y:0},
+  back_coxa_d:{x:0,y:0},
+  back_joelho_e:{x:0,y:0},
+  back_joelho_d:{x:0,y:0},
+  back_perna_e:{x:0,y:0},
+  back_perna_d:{x:0,y:0},
+  back_tornozelo_e:{x:0,y:0},
+  back_tornozelo_d:{x:0,y:0},
+  back_pe_e:{x:0,y:0},
+  back_pe_d:{x:0,y:0}
+};
+
+var MARKER_CALIBRATION_PRESETS={
+  clinico_1:{id:"clinico_1",label:"Preset clínico 1"},
+  clinico_2:{id:"clinico_2",label:"Preset clínico 2"}
+};
+
+function loadActiveMarkerCalibrationPresetKey(){
+  try{
+    var raw=localStorage.getItem(MARKER_CALIBRATION_PRESET_STORAGE_KEY);
+    var key=String(raw||"clinico_1");
+    if(!MARKER_CALIBRATION_PRESETS[key])return "clinico_1";
+    return key;
+  }catch(e){
+    return "clinico_1";
+  }
+}
+
+function saveActiveMarkerCalibrationPresetKey(key){
+  var k=String(key||"clinico_1");
+  if(!MARKER_CALIBRATION_PRESETS[k])k="clinico_1";
+  try{localStorage.setItem(MARKER_CALIBRATION_PRESET_STORAGE_KEY,k);}catch(e){}
+  return k;
+}
+
+function buildMarkerCalibrationPreset(presetKey){
+  var activeKey=String(presetKey||loadActiveMarkerCalibrationPresetKey());
+  if(!MARKER_CALIBRATION_PRESETS[activeKey])activeKey="clinico_1";
   var preset={};
   (BODY_MARKERS||[]).forEach(function(marker){
     var id=String(marker.id||"");
-    var left=id.indexOf("_e")!==-1 || id.indexOf("esquerdo")!==-1;
-    var right=id.indexOf("_d")!==-1 || id.indexOf("direito")!==-1;
-    var x=0;
-    var y=0;
-    if(/clavicula|ombro/.test(id)){
-      x=left?0.2:(right?-0.2:0);
-      y=-0.2;
-    }else if(/braco/.test(id)){
-      x=left?0.6:(right?-0.6:0);
-      y=-0.4;
-    }else if(/cotovelo/.test(id)){
-      x=left?0.4:(right?-0.4:0);
-      y=-0.2;
-    }else if(/antebraco/.test(id)){
-      x=left?0.5:(right?-0.5:0);
-      y=-0.3;
-    }else if(/mao/.test(id)){
-      x=left?0.6:(right?-0.6:0);
-      y=-0.1;
-    }else if(/quadril/.test(id)){
-      x=left?0.2:(right?-0.2:0);
-      y=-0.1;
-    }else if(/coxa/.test(id)){
-      x=left?0.5:(right?-0.5:0);
-      y=-0.2;
-    }else if(/joelho/.test(id)){
-      x=left?0.3:(right?-0.3:0);
-      y=-0.1;
-    }else if(/perna/.test(id)){
-      x=left?0.4:(right?-0.4:0);
-      y=-0.1;
-    }else if(/tornozelo/.test(id)){
-      x=left?0.3:(right?-0.3:0);
-      y=-0.1;
-    }else if(/pe/.test(id)){
-      x=left?0.4:(right?-0.4:0);
-      y=0.1;
-    }else if(/cervical|dorsal|lombar|sacra/.test(id)){
-      x=0;
-      y=0;
-    }else if(/costelas/.test(id)){
-      x=0;
-      y=0;
+    if(activeKey==="clinico_2"){
+      preset[id]={x:0,y:0};
+      return;
     }
-    preset[id]={x:x,y:y};
+    var canonical=MARKER_CALIBRATION_CANONICAL[id];
+    preset[id]={x:Number(canonical&&canonical.x||0),y:Number(canonical&&canonical.y||0)};
   });
   return preset;
+}
+
+var BODY_SEGMENT_ORDER=(function(){
+  var out={};
+  BODY_SEGMENTS.forEach(function(seg,idx){out[seg.id]=idx});
+  return out;
+})();
+
+function orderedMarkedSegmentIds(segmentMarks){
+  return Object.keys(segmentMarks||{})
+    .filter(function(id){return !!segmentMarks[id]})
+    .sort(function(a,b){
+      var ia=(BODY_SEGMENT_ORDER[a]!==undefined)?BODY_SEGMENT_ORDER[a]:9999;
+      var ib=(BODY_SEGMENT_ORDER[b]!==undefined)?BODY_SEGMENT_ORDER[b]:9999;
+      return ia-ib;
+    });
 }
 
 function loadMarkerCalibrationStore(){
@@ -1066,12 +1129,13 @@ function clearAllMarkerCalibration(){
   saveMarkerCalibrationStore();
 }
 
-function applyMarkerCalibrationPreset(){
-  markerCalibrationCache=buildMarkerCalibrationPreset();
+function applyMarkerCalibrationPreset(presetKey){
+  var activeKey=saveActiveMarkerCalibrationPresetKey(presetKey||loadActiveMarkerCalibrationPresetKey());
+  markerCalibrationCache=buildMarkerCalibrationPreset(activeKey);
   saveMarkerCalibrationStore();
 }
 
-var state={tab:"agenda",agView:"dia",patients:loadPatients(),activePatientId:null,repoByPatient:{},call:{on:false,t:0,mic:true,cam:true,iv:null},teleDoc:null,teleText:{},teleGen:{},pres:{lines:[],rec:false,doc:null,anam:false,anamData:null,docText:{},docGen:{},liveText:"",ctrl:null,iv:null,idx:0,active:false,t:0,tiv:null},teleTrans:{rec:false,liveText:"",ctrl:null,anam:false,anamData:null},teleSession:{active:false,t:0,tiv:null,roomId:"",joinUrl:"",waLink:"",captureSystemAudio:true},triage:{tele:makeTriageState(),pres:makeTriageState()},rebook:{tele:{date:todayIso(),time:""},pres:{date:todayIso(),time:""}},interconsultaDraft:{tele:{exameTexto:"",exameLink:"",exameUploads:[]},pres:{exameTexto:"",exameLink:"",exameUploads:[]}},interconsulta:{activeCaseId:null,cases:[],session:{active:false,t:0,tiv:null,rec:false,ctrl:null,liveText:"",summaryStatus:"idle"}},lgpd:{retentionDays:LGPD_DEFAULT_RETENTION_DAYS,expurged:0,lastPurgeAt:""},form:{nome:"",cpf:"",plano:"",queixa:"",tipo:"presencial",esp:"Clínica Geral",data:"",hora:"",ok:false}};
+var state={tab:"agenda",agView:"dia",patients:loadPatients(),activePatientId:null,repoByPatient:loadRepositoryMirror(),call:{on:false,t:0,mic:true,cam:true,iv:null},teleDoc:null,teleText:{},teleGen:{},pres:{lines:[],rec:false,doc:null,anam:false,anamData:null,docText:{},docGen:{},liveText:"",ctrl:null,iv:null,idx:0,active:false,t:0,tiv:null},teleTrans:{rec:false,liveText:"",ctrl:null,anam:false,anamData:null},teleSession:{active:false,t:0,tiv:null,roomId:"",joinUrl:"",waLink:"",captureSystemAudio:true},triage:{tele:makeTriageState(),pres:makeTriageState()},rebook:{tele:{date:todayIso(),time:""},pres:{date:todayIso(),time:""}},interconsultaDraft:{tele:{exameTexto:"",exameLink:"",exameUploads:[]},pres:{exameTexto:"",exameLink:"",exameUploads:[]}},interconsulta:{activeCaseId:null,cases:[],session:{active:false,t:0,tiv:null,rec:false,ctrl:null,liveText:"",summaryStatus:"idle"}},lgpd:{retentionDays:LGPD_DEFAULT_RETENTION_DAYS,expurged:0,lastPurgeAt:"",selectedPatientId:null},form:{nome:"",cpf:"",plano:"",queixa:"",tipo:"presencial",esp:"Clínica Geral",data:"",hora:"",ok:false}};
 state.teleDocItems={};
 state.teleDocIdx={};
 state.pres.docItems={};
@@ -1157,42 +1221,140 @@ function doctorStampLabel(){
   var nome=s.name||"Médico Responsável";
   return "Dr(a). "+nome+" · ORTOPGUIA";
 }
+/* ----------------------------------------------------------------
+   assistantSpecsText — vincula cada documento ao assistente IA
+   enviado. Alinhado com os agentes do backend (agents.js).
+---------------------------------------------------------------- */
 function assistantSpecsText(docId,mode){
-  var map={
-    prescricao:"Sugestão terapêutica estruturada a partir da transcrição e dados clínicos.",
-    atestado:"Síntese clínica para afastamento/relato com linguagem técnica e objetiva.",
-    exames:"Recomendação de exames com base na hipótese clínica descrita.",
-    cirurgia:"Pré-estruturação de indicação cirúrgica para validação médica final.",
-    terapias:"Plano terapêutico com objetivos, frequência e critérios de seguimento."
+  var assistantByDoc={
+    prescricao:"Assistente de Prescrição Médica (agente: prescricao)",
+    atestado:"Assistente de Atestado / Relatório (agente: relatorio)",
+    exames:"Assistente de Pedido de Exames (agente: exames)",
+    cirurgia:"Assistente de Indicação Cirúrgica (agente: cirurgia)",
+    terapias:"Assistente de Plano Terapêutico (agente: terapias)"
   };
-  return [
-    "Assistente: "+(mode==="tele"?"Assistente de Teleconsulta":"Assistente de Consulta Presencial"),
-    "Módulo: "+(map[docId]||"Geração de documento clínico assistido por IA"),
-    "Status: Finalizado"
-  ].join("\n");
+  var modeLabel=mode==="tele"?"Teleconsulta":"Consulta Presencial";
+  return (assistantByDoc[docId]||"Assistente de Documento Clínico")+" · "+modeLabel;
 }
+
+/* ----------------------------------------------------------------
+   Retorna o nome do hospital a partir do estado de sessão ou
+   da pill visível no header.
+---------------------------------------------------------------- */
+function hospitalName(){
+  var s=getSession()||{};
+  return s.hospital||s.hospitalName||"Hospital Casa São Bernardo";
+}
+
+/* ----------------------------------------------------------------
+   formatMedicalDocument — layout estruturado por tipo de documento
+   Header: hospital / paciente+plano+CPF / nome do documento
+   Body: específico por tipo
+   Footer: data / médico / assinatura eletrônica
+---------------------------------------------------------------- */
 function formatMedicalDocument(mode,docId,rawText,pt){
+  var SEP="─────────────────────────────────────────────────────────";
   var nowIso=new Date().toISOString();
   var doc=(DOCS.filter(function(d){return d.id===docId})[0]||{});
   var docTitle=doc.l||"Documento Médico";
-  var patientName=(pt&&pt.name)?pt.name:"Paciente";
-  var patientPlan=(pt&&pt.plano)?pt.plano:"Não informado";
+
+  // dados do paciente
+  var patientName=(pt&&pt.name)?String(pt.name).trim():"Paciente";
+  var patientPlan=(pt&&pt.plano)?String(pt.plano).trim():"Não informado";
+  var patientCpf=(pt&&pt.cpf)?String(pt.cpf).trim():"Não informado";
+
+  // dados do médico
+  var s=getSession()||{};
+  var doctorName=s.name?"Dr(a). "+String(s.name).trim():"Dr(a). Médico Responsável";
+  var crm=s.crm?(" · CRM "+String(s.crm).trim()):"";
+  var hosp=hospitalName();
+
+  // corpo específico por tipo
   var body=(rawText||"").trim();
-  return [
-    "ORTOPGUIA — "+docTitle,
-    "Paciente: "+patientName,
-    "Plano de Saúde: "+patientPlan,
+  var bodySection="";
+  if(docId==="prescricao"){
+    bodySection=[
+      SEP,
+      "PRESCRIÇÃO MÉDICA",
+      SEP,
+      "",
+      body||"[ Medicamentos e posologia — preencha ou clique em Gerar com IA ]",
+      ""
+    ].join("\n");
+  } else if(docId==="atestado"){
+    bodySection=[
+      SEP,
+      "ATESTADO / RELATÓRIO",
+      SEP,
+      "",
+      body||"[ Texto do atestado ou relatório clínico ]",
+      ""
+    ].join("\n");
+  } else if(docId==="exames"){
+    bodySection=[
+      SEP,
+      "SOLICITAÇÃO DE EXAMES",
+      SEP,
+      "",
+      body||"[ Exames solicitados — preencha ou clique em Gerar com IA ]",
+      ""
+    ].join("\n");
+  } else if(docId==="cirurgia"){
+    bodySection=[
+      SEP,
+      "PEDIDO CIRÚRGICO",
+      SEP,
+      "⚠ Aguarda confirmação do médico responsável antes do envio.",
+      "",
+      body||"[ Indicação cirúrgica — preencha ou clique em Gerar com IA ]",
+      ""
+    ].join("\n");
+  } else if(docId==="terapias"){
+    bodySection=[
+      SEP,
+      "PLANO TERAPÊUTICO",
+      SEP,
+      "",
+      body||"[ Objetivos e plano de terapias — preencha ou clique em Gerar com IA ]",
+      ""
+    ].join("\n");
+  } else {
+    bodySection=[
+      SEP,
+      docTitle.toUpperCase(),
+      SEP,
+      "",
+      body||"[ Conteúdo do documento ]",
+      ""
+    ].join("\n");
+  }
+
+  // cabeçalho
+  var header=[
+    "╔══════════════════════════════════════════════════════════╗",
+    "║  "+hosp,
+    "╚══════════════════════════════════════════════════════════╝",
     "",
-    "Especificações do Assistente",
-    assistantSpecsText(docId,mode),
+    "Paciente : "+patientName,
+    "Plano    : "+patientPlan,
+    "CPF      : "+patientCpf,
     "",
-    "Documento",
-    body||"Sem conteúdo.",
-    "",
-    "Data de Finalização: "+fmtDateTimeBR(nowIso),
-    "Carimbo Médico: "+doctorStampLabel(),
-    "Assinatura Eletrônica: PENDENTE DE IMPLEMENTAÇÃO"
+    "Documento: "+docTitle.toUpperCase(),
+    "Assistente IA: "+assistantSpecsText(docId,mode),
+    ""
   ].join("\n");
+
+  // rodapé
+  var dateStr=fmtDateTimeBR(nowIso);
+  var footer=[
+    SEP,
+    "Data      : "+dateStr,
+    "Médico    : "+doctorName+crm,
+    "Assinatura: ortopguia-assinatura",
+    SEP
+  ].join("\n");
+
+  return header+"\n"+bodySection+"\n"+footer;
 }
 function triageModeState(mode){return mode==="tele"?state.triage.tele:state.triage.pres}
 function triageSetAnswer(mode,key,val){
@@ -1482,7 +1644,7 @@ function triageSummaryLines(mode){
     var vl=(TRIAGE_VALUE_LABEL[k]&&TRIAGE_VALUE_LABEL[k][v])||v;
     lines.push(q+": "+vl);
   });
-  var markedSegments=Object.keys(t.segmentMarks||{}).filter(function(k){return !!t.segmentMarks[k]}).map(function(id){return BODY_SEGMENT_BY_ID[id]}).filter(Boolean);
+  var markedSegments=orderedMarkedSegmentIds(t.segmentMarks).map(function(id){return BODY_SEGMENT_BY_ID[id]}).filter(Boolean);
   if(markedSegments.length)lines.push("Mapa segmentar: "+markedSegments.map(function(s){return s.label}).join(", "));
   if(decision.redFlags.length){
     lines.push("Red flags marcadas: "+decision.redFlags.join(", "));
@@ -1516,7 +1678,7 @@ function triageAsObject(mode){
       ortopedia:decision.ortopedia,
       cirurgia:decision.cirurgia
     },
-    locaisDorDetalhados:Object.keys(t.segmentMarks||{}).filter(function(k){return !!t.segmentMarks[k]}).map(function(id){
+    locaisDorDetalhados:orderedMarkedSegmentIds(t.segmentMarks).map(function(id){
       var seg=BODY_SEGMENT_BY_ID[id]||{label:id,side:""};
       return {id:id,label:seg.label,side:seg.side||"",eixo:"",tecido:""};
     })
@@ -1573,7 +1735,7 @@ function triageWidget(mode){
   });
   var segmentBlock='<div class="segment-checks"><div class="ttl">Checklist ortopédico por segmento (opcional)</div>'+segHtml+'</div>';
   var tabs='';
-  var markedSegments=Object.keys(t.segmentMarks||{}).filter(function(k){return !!t.segmentMarks[k]});
+  var markedSegments=orderedMarkedSegmentIds(t.segmentMarks);
   var segmentAreas="";
   BODY_SEGMENTS.forEach(function(s){
     if(s.view!==currentView)return;
@@ -1613,12 +1775,9 @@ function triageWidget(mode){
     segmentHotspots+='<button class="segment-hotspot '+(marked?'marked':'')+' '+(selectedCalibration?'calib-selected':'')+'" data-marker-id="'+marker.id+'" data-base-x="'+baseX+'" data-base-y="'+baseY+'" style="left:calc('+cx+'% - 12px);top:calc('+cy+'% - 12px)" title="'+marker.label+'" onclick="triageHandleMarkerClick(\''+mode+'\',\''+marker.id+'\')" onmousedown="triageStartCalibrationDrag(event,\''+mode+'\',\''+marker.id+'\')" ontouchstart="triageStartCalibrationDrag(event,\''+mode+'\',\''+marker.id+'\')"></button>';
   });
   var calibration=t.calibration||{active:false,markerId:""};
-  var calibrationMarker=calibration.markerId?markerById(calibration.markerId):null;
-  var calibrationOffset=calibrationMarker?markerCalibrationOffset(calibration.markerId):{x:0,y:0};
-  var calibrationPanel='<div class="segment-zoom"><div class="ttl">Calibração anatômica</div><div class="sub">'+(calibration.active?'Clique ou arraste um ponto para alinhar manualmente e depois salve.':'Ative a calibração para selecionar e ajustar os marcadores.')+'</div><div class="acc-presets"><button class="'+(calibration.active?'on':'')+'" onclick="triageToggleCalibrationMode(\''+mode+'\')">'+(calibration.active?'Calibração ligada':'Ativar calibração')+'</button><button onclick="triageApplyCalibrationPreset(\''+mode+'\')">Aplicar preset anatômico</button><button onclick="triageResetCalibrationSelected(\''+mode+'\')">Zerar selecionado</button><button onclick="triageResetCalibrationAll(\''+mode+'\')">Zerar tudo</button><button onclick="triageSaveCalibrationManual(\''+mode+'\')">Salvar calibração</button></div><div class="segment-chooser">'+(calibrationMarker?('<button class="on">Selecionado: '+esc(calibrationMarker.label)+'</button>'):'<button class="on">Nenhum marcador selecionado</button>')+'</div><div class="segment-zoom-grid"><button onclick="triageNudgeCalibration(\''+mode+'\',0,-1.5)">↑ subir um passo</button><button onclick="triageNudgeCalibration(\''+mode+'\',0,1.5)">↓ descer um passo</button><button onclick="triageNudgeCalibration(\''+mode+'\',-1.5,0)">← deslocar para dentro</button><button onclick="triageNudgeCalibration(\''+mode+'\',1.5,0)">→ deslocar para fora</button></div><div class="sub" style="margin-top:8px">Deslocamento atual: '+Number(calibrationOffset.x||0).toFixed(1)+' / '+Number(calibrationOffset.y||0).toFixed(1)+'</div></div>';
   var figureBody='<div class="mini-skeleton '+(t.bodyView==='back'?'back':'front')+'"><div class="skull"></div><div class="jaw"></div><div class="bone clavicle left"></div><div class="bone clavicle right"></div><div class="bone sternum"></div><div class="bone spine"></div><div class="ribcage"></div><div class="ribline r1"></div><div class="ribline r2"></div><div class="ribline r3"></div><div class="ribline r4"></div><div class="scapula left"></div><div class="scapula right"></div><div class="pelvis"></div><div class="pelvis-wing left"></div><div class="pelvis-wing right"></div><div class="arm left"><span class="bone humerus"></span><span class="bone radius"></span><span class="bone ulna"></span><span class="bone carpus"></span><span class="bone metacarpus"></span><span class="bone phalanges"></span><span class="bone thumb"></span></div><div class="arm right"><span class="bone humerus"></span><span class="bone radius"></span><span class="bone ulna"></span><span class="bone carpus"></span><span class="bone metacarpus"></span><span class="bone phalanges"></span><span class="bone thumb"></span></div><div class="leg left"><span class="bone femur"></span><span class="bone patella"></span><span class="bone tibia"></span><span class="bone fibula"></span><span class="bone tarsus"></span><span class="bone metatarsus"></span><span class="bone toephalanges"></span></div><div class="leg right"><span class="bone femur"></span><span class="bone patella"></span><span class="bone tibia"></span><span class="bone fibula"></span><span class="bone tarsus"></span><span class="bone metatarsus"></span><span class="bone toephalanges"></span></div><div class="joint shoulder left"></div><div class="joint shoulder right"></div><div class="joint elbow left"></div><div class="joint elbow right"></div><div class="joint wrist left"></div><div class="joint wrist right"></div><div class="joint hip left"></div><div class="joint hip right"></div><div class="joint knee left"></div><div class="joint knee right"></div><div class="joint ankle left"></div><div class="joint ankle right"></div></div><div class="segment-areas">'+segmentAreas+'</div><div class="segment-layer">'+segmentHotspots+'</div>';
   var figureBody=miniSkeletonImage(currentView)+'<div class="segment-areas">'+segmentAreas+'</div><div class="segment-layer">'+segmentHotspots+'</div>';
-  var zoomPanel='<div class="segment-zoom"><div class="ttl">Pontos de marcação</div><div class="sub">Clique nas bolinhas para marcar dor sobre a imagem anatômica padrão.</div><div class="acc-presets"><button class="'+(contrastOn?'on':'')+'" onclick="triageToggleAccessibility(\''+mode+'\',\'contrast\')">Alto contraste</button><button class="'+(touchOn?'on':'')+'" onclick="triageToggleAccessibility(\''+mode+'\',\'touch\')">Toque fácil</button></div></div>';
+  var zoomPanel='';
   var marksHtml='';
   if(markedSegments.length){
     marksHtml='<div class="marks-panel"><div class="ttl">Áreas machucadas selecionadas</div><div class="count">'+markedSegments.length+' marcação(ões) ativa(s)</div><div class="mark-list">';
@@ -1634,13 +1793,13 @@ function triageWidget(mode){
   if(skeletonPhaseOnly){
     figureBody=miniSkeletonImage(currentView);
     zoomPanel='<div class="segment-zoom"><div class="ttl">Fase 1: estrutura do esqueleto</div><div class="sub">Reinício aplicado. Nesta etapa exibimos apenas o esqueleto anatômico base; as marcações serão adicionadas na fase 2.</div></div>';
-    calibrationPanel='';
+    
     marksHtml='';
   }
   var summary=triageSummaryLines(mode);
   var summaryHtml=summary.length?summary.join(' · '):'Nenhum dado opcional selecionado ainda.';
   var decisionBlock='<div class="decision" style="border-color:'+decision.color.bd+'"><div class="h"><div style="font-size:11px;font-weight:700;color:#13404A">Decisão clínica de apoio</div><div class="lights"><span class="l '+(decision.urgencia==="baixa"?'on baixa':'')+'"></span><span class="l '+(decision.urgencia==="moderada"?'on moderada':'')+'"></span><span class="l '+(decision.urgencia==="alta"?'on alta':'')+'"></span></div><div class="tag" style="background:'+decision.color.bg+';color:'+decision.color.tx+'">Urgência '+decision.urgenciaLabel+'</div></div><div class="a">'+decision.action+'</div><div class="meta"><div class="m"><div class="k">Tempo-alvo</div><div class="v">'+decision.tempoAlvo+'</div></div><div class="m"><div class="k">Rota sugerida</div><div class="v">'+decision.encaminhamento+'</div></div></div><div class="b">Ortopedia: '+(decision.ortopedia?'recomendado':'avaliar clinicamente')+' · Cirurgia: '+(decision.cirurgia?'considerar avaliação':'sem indicação imediata')+'</div></div>';
-  return '<div class="triage"><div class="card"><div class="ahead" style="display:block"><div class="tt">'+svg("clipboard","ico-sm")+'Perguntas críticas opcionais</div><div class="ds">Cliques rápidos para red flags, urgência e decisão de encaminhamento</div></div><div class="triage-body"><div class="triage-grid">'+qhtml+'</div>'+scaleBlock+redFlagsBlock+segmentBlock+decisionBlock+'<div class="triage-actions"><div class="hint">Não obrigatório. Apoio rápido para decisão sem perda de tempo.</div><button class="clear" onclick="triageClear(\''+mode+'\')">Limpar seleções</button></div><div class="triage-summary">'+esc(summaryHtml)+'</div></div></div><div class="card"><div class="ahead" style="display:block"><div class="tt">'+svg("user","ico-sm")+'Mini esqueleto segmentado</div><div class="ds">Marcação por pontos: bolinhas azuis ficam vermelhas quando selecionadas</div></div><div class="mini-body">'+tabs+'<div class="mini-figure '+(contrastOn?'acc-contrast ':'')+(touchOn?'acc-touch':'')+'">'+figureBody+'</div>'+zoomPanel+calibrationPanel+marksHtml+'<div class="mini-label">Cobertura completa: coluna, clavículas, costelas, articulações (ombros, cotovelos, punhos/mãos, quadris, joelhos, tornozelos), mãos, pés e membros superiores/inferiores em frente e costas.</div></div></div></div>';
+  return '<div class="triage"><div class="card"><div class="ahead" style="display:block"><div class="tt">'+svg("clipboard","ico-sm")+'Perguntas críticas opcionais</div><div class="ds">Cliques rápidos para red flags, urgência e decisão de encaminhamento</div></div><div class="triage-body"><div class="triage-grid">'+qhtml+'</div>'+scaleBlock+redFlagsBlock+segmentBlock+decisionBlock+'<div class="triage-actions"><div class="hint">Não obrigatório. Apoio rápido para decisão sem perda de tempo.</div><button class="clear" onclick="triageClear(\''+mode+'\')">Limpar seleções</button></div><div class="triage-summary">'+esc(summaryHtml)+'</div></div></div><div class="card"><div class="ahead" style="display:block"><div class="tt">'+svg("user","ico-sm")+'Mini esqueleto segmentado</div><div class="ds">Marcação por pontos: bolinhas azuis ficam vermelhas quando selecionadas</div></div><div class="mini-body">'+tabs+'<div class="mini-figure '+(contrastOn?'acc-contrast ':'')+(touchOn?'acc-touch':'')+'">'+figureBody+'</div>'+marksHtml+'<div class="mini-label">Cobertura completa: coluna, clavículas, costelas, articulações (ombros, cotovelos, punhos/mãos, quadris, joelhos, tornozelos), mãos, pés e membros superiores/inferiores em frente e costas.</div></div></div></div>';
 }
 
 function triageHandleMarkerClick(mode,markerId){
@@ -1770,8 +1929,8 @@ function triageResetCalibrationAll(mode){
   render();
 }
 
-function triageApplyCalibrationPreset(mode){
-  applyMarkerCalibrationPreset();
+function triageApplyCalibrationPreset(mode,presetKey){
+  applyMarkerCalibrationPreset(presetKey||loadActiveMarkerCalibrationPresetKey());
   var t=triageModeState(mode);
   if(!t.calibration||typeof t.calibration!=="object")t.calibration={active:true,markerId:""};
   t.calibration.active=true;
@@ -2337,26 +2496,64 @@ function agendaOpenPatient(id){
 function repositoryDocsForPatient(id){
   return state.repoByPatient[String(id)]||[];
 }
+function selectedHistoryPatient(){
+  var selectedId=Number(state.lgpd&&state.lgpd.selectedPatientId||0);
+  var selected=selectedId?getPatientById(selectedId):null;
+  if(selected)return selected;
+  if(state.patients&&state.patients.length){
+    state.lgpd.selectedPatientId=state.patients[0].id;
+    return state.patients[0];
+  }
+  return null;
+}
+function selectHistoryPatient(id){
+  var patientId=Number(id||0);
+  if(!patientId)return;
+  state.lgpd.selectedPatientId=patientId;
+  loadPatientRepository(patientId);
+  render();
+}
+function viewHistoryDocument(patientId,index){
+  var docs=repositoryDocsForPatient(patientId);
+  var doc=docs[Number(index||0)];
+  if(!doc){alert("Documento não encontrado.");return}
+  var title=doc.title||doc.docType||"Documento";
+  var body=String(doc.content||"Sem conteúdo disponível.");
+  var html='<!doctype html><html><head><meta charset="utf-8"><title>'+esc(title)+'</title><style>body{font-family:Inter,Segoe UI,sans-serif;padding:24px;color:#1f2a30;background:#fff}h1{font-size:18px;margin:0 0 8px}p{color:#697275;font-size:12px;margin:0 0 16px}pre{white-space:pre-wrap;line-height:1.55;font-size:12px;background:#F4F8FA;border:1px solid #E6EDF0;border-radius:12px;padding:16px}</style></head><body><h1>'+esc(title)+'</h1><p>'+esc((doc.createdAt||'').replace('T',' ').slice(0,16))+'</p><pre>'+esc(body)+'</pre></body></html>';
+  var w=window.open("","_blank","width=980,height=760");
+  if(!w){alert("Não foi possível abrir a visualização do documento.");return}
+  w.document.open();
+  w.document.write(html);
+  w.document.close();
+}
 function loadPatientRepository(id){
   if(!id||typeof OrtoguIA==="undefined"||!OrtoguIA.listarDocumentosProntuario)return;
   OrtoguIA.listarDocumentosProntuario(id)
-    .then(function(docs){state.repoByPatient[String(id)]=Array.isArray(docs)?docs:[];render();})
+    .then(function(docs){state.repoByPatient[String(id)]=Array.isArray(docs)?docs:[];saveRepositoryMirror();render();})
     .catch(function(){});
 }
 function saveDocumentToCloud(pt,mode,docType,title,content,metadata){
-  if(!pt||typeof OrtoguIA==="undefined"||!OrtoguIA.salvarDocumentoProntuario)return;
-  OrtoguIA.salvarDocumentoProntuario({
+  if(!pt)return;
+  var key=String(pt.id);
+  var localDoc={
     patientId:pt.id,
     patientName:pt.name,
     mode:mode,
     docType:docType,
     title:title,
     content:content,
-    metadata:metadata||{}
-  }).then(function(saved){
-    var key=String(pt.id);
-    if(!state.repoByPatient[key])state.repoByPatient[key]=[];
-    state.repoByPatient[key].unshift(saved);
+    metadata:metadata||{},
+    createdAt:new Date().toISOString()
+  };
+  if(!state.repoByPatient[key])state.repoByPatient[key]=[];
+  state.repoByPatient[key].unshift(localDoc);
+  saveRepositoryMirror();
+  render();
+  if(typeof OrtoguIA==="undefined"||!OrtoguIA.salvarDocumentoProntuario)return;
+  OrtoguIA.salvarDocumentoProntuario(localDoc).then(function(saved){
+    state.repoByPatient[key]=state.repoByPatient[key]||[];
+    state.repoByPatient[key][0]=saved||localDoc;
+    saveRepositoryMirror();
     render();
   }).catch(function(){});
 }
@@ -2620,7 +2817,14 @@ function gerarDoc(mode,id){
   var triagem=triageAsObject(mode==="tele"?"tele":"pres");
 
   function enviarDocumento(anam){
-    return OrtoguIA.gerarDocumento(id,{paciente:paciente,anamnese:anam,transcricao:transcricao,triagem:triagem,instrucoes:""})
+    var s=getSession()||{};
+    var instrucoes=[
+      "Hospital: "+hospitalName(),
+      "Médico: "+(s.name?"Dr(a). "+s.name:"Médico Responsável")+(s.crm?" · CRM "+s.crm:""),
+      "Assistente: "+assistantSpecsText(id,mode),
+      "Retorne apenas o corpo do documento (sem cabeçalho nem rodapé — estes serão adicionados pelo sistema)."
+    ].join(" | ");
+    return OrtoguIA.gerarDocumento(id,{paciente:paciente,anamnese:anam,transcricao:transcricao,triagem:triagem,instrucoes:instrucoes})
       .then(function(texto){
         var chunks=normalizeAgentOutputs(texto);
         if(!chunks.length)chunks=[""];
@@ -3008,7 +3212,9 @@ return '<div><div class="h2">Assistentes</div><div class="sub">Estrutura inicial
   +'</div>';
 }
 function viewLgpd(){
-  if(!canAccessTab("lgpd"))return '<div><div class="h2">LGPD</div><div class="sub">Acesso restrito</div><div class="card" style="padding:16px;margin-top:14px">Seu perfil não possui permissão para governança de dados.</div></div>';
+  if(!canAccessTab("lgpd"))return '<div><div class="h2">Histórico</div><div class="sub">Acesso restrito</div><div class="card" style="padding:16px;margin-top:14px">Seu perfil não possui permissão para histórico documental.</div></div>';
+  var selectedPatient=selectedHistoryPatient();
+  if(selectedPatient)loadPatientRepository(selectedPatient.id);
   var patientsRows=state.patients.map(function(p){
     return '<tr>'
       +'<td style="padding:10px;border-bottom:1px solid #E6EDF0">'+esc(p.name||"")+'</td>'
@@ -3017,6 +3223,24 @@ function viewLgpd(){
       +'<td style="padding:10px;border-bottom:1px solid #E6EDF0"><div style="display:flex;gap:6px;flex-wrap:wrap"><button class="headbtn" onclick="exportPatientData('+Number(p.id||0)+')">'+svg("download","ico-sm")+'Exportar</button><button class="headbtn" style="color:#C23C3A;border-color:#F1C9C7" onclick="deletePatientData('+Number(p.id||0)+')">'+svg("trash","ico-sm")+'Eliminar</button></div></td>'
       +'</tr>';
   }).join("");
+  var patientButtons=state.patients.map(function(p){
+    var active=selectedPatient&&Number(selectedPatient.id)===Number(p.id);
+    var docsCount=repositoryDocsForPatient(p.id).length;
+    return '<button class="headbtn'+(active?' primary':'')+'" style="justify-content:space-between;width:100%;margin-bottom:8px" onclick="selectHistoryPatient('+Number(p.id||0)+')"><span>'+esc(p.name||"")+'</span><span>'+docsCount+' doc(s)</span></button>';
+  }).join('');
+  var historyRows='';
+  if(selectedPatient){
+    var selectedDocs=repositoryDocsForPatient(selectedPatient.id);
+    historyRows=selectedDocs.map(function(d,idx){
+      var at=(d.createdAt||"").replace("T"," ").slice(0,16);
+      return '<tr>'
+        +'<td style="padding:10px;border-bottom:1px solid #E6EDF0">'+esc(at)+'</td>'
+        +'<td style="padding:10px;border-bottom:1px solid #E6EDF0">'+esc(d.title||d.docType||"Documento")+'</td>'
+        +'<td style="padding:10px;border-bottom:1px solid #E6EDF0">'+esc(d.docType||"registro")+'</td>'
+        +'<td style="padding:10px;border-bottom:1px solid #E6EDF0"><button class="headbtn" onclick="viewHistoryDocument('+Number(selectedPatient.id||0)+','+idx+')">'+svg("docs","ico-sm")+'Visualizar</button></td>'
+        +'</tr>';
+    }).join('');
+  }
   var logs=readAuditLogs().slice(-20).reverse().map(function(l){
     return '<tr>'
       +'<td style="padding:8px;border-bottom:1px solid #E6EDF0">'+esc((l.at||"").replace("T"," ").slice(0,19))+'</td>'
@@ -3025,8 +3249,9 @@ function viewLgpd(){
       +'<td style="padding:8px;border-bottom:1px solid #E6EDF0">'+esc(l.outcome||"ok")+'</td>'
       +'</tr>';
   }).join("");
-  return '<div><div class="h2">Governança LGPD</div><div class="sub">Consentimento, retenção, exportação e eliminação de dados</div>'
+  return '<div><div class="h2">Histórico</div><div class="sub">Documentação específica por paciente</div>'
     +'<div class="card" style="padding:16px;margin-top:14px"><div class="frow"><div><label class="lbl">Retenção (dias)</label><input class="inp" type="number" min="30" value="'+state.lgpd.retentionDays+'" oninput="setRetentionDays(this.value)"></div><div style="display:flex;align-items:flex-end"><button class="sessionbtn" onclick="runRetentionNow()">'+svg("lgpd","ico-sm")+'Executar Expurgo Agora</button></div></div><div class="sub" style="margin-top:8px">Último expurgo: '+esc(state.lgpd.lastPurgeAt?state.lgpd.lastPurgeAt.replace("T"," ").slice(0,19):"não executado")+' · itens removidos: '+Number(state.lgpd.expurged||0)+'</div></div>'
+    +'<div class="row" style="margin-top:14px;align-items:stretch"><div class="card" style="width:300px;max-width:100%;padding:12px"><div class="tt">'+svg("user","ico-sm")+'Pacientes</div><div class="sub" style="margin-top:6px">Selecione um paciente para ver apenas a documentação dele.</div><div style="margin-top:12px">'+(patientButtons||'<div class="empty" style="padding-top:24px">Nenhum paciente cadastrado.</div>')+'</div></div><div class="card" style="flex:1;min-width:0"><div class="ahead" style="display:block"><div class="tt">'+svg("agenda","ico-sm")+'Consultas e documentos</div><div class="ds">'+(selectedPatient?('Paciente: '+esc(selectedPatient.name)+' · '+Number(selectedPatient.consultasPrevias||0)+' consulta(s)'): 'Selecione um paciente para ver o histórico')+'</div></div><div style="padding:10px;overflow:auto"><table style="width:100%;border-collapse:collapse;font-size:12px"><thead><tr><th style="text-align:left;padding:10px;border-bottom:1px solid #E6EDF0">Data/Hora</th><th style="text-align:left;padding:10px;border-bottom:1px solid #E6EDF0">Documento</th><th style="text-align:left;padding:10px;border-bottom:1px solid #E6EDF0">Tipo</th><th style="text-align:left;padding:10px;border-bottom:1px solid #E6EDF0">Ação</th></tr></thead><tbody>'+(historyRows||'<tr><td colspan="4" style="padding:14px;color:#A2ABAE">Nenhum documento encontrado para este paciente.</td></tr>')+'</tbody></table></div></div></div>'
     +'<div class="card" style="margin-top:14px"><div class="ahead" style="display:block"><div class="tt">'+svg("user","ico-sm")+'Direitos do Titular (Paciente)</div><div class="ds">Exportação e eliminação por paciente</div></div><div style="padding:10px;overflow:auto"><table style="width:100%;border-collapse:collapse;font-size:12px"><thead><tr><th style="text-align:left;padding:10px;border-bottom:1px solid #E6EDF0">Paciente</th><th style="text-align:left;padding:10px;border-bottom:1px solid #E6EDF0">CPF</th><th style="text-align:left;padding:10px;border-bottom:1px solid #E6EDF0">Retenção até</th><th style="text-align:left;padding:10px;border-bottom:1px solid #E6EDF0">Ações</th></tr></thead><tbody>'+(patientsRows||'<tr><td colspan="4" style="padding:14px;color:#A2ABAE">Nenhum paciente cadastrado.</td></tr>')+'</tbody></table></div></div>'
     +'<div class="card" style="margin-top:14px"><div class="ahead" style="display:block"><div class="tt">'+svg("clipboard","ico-sm")+'Trilha de Auditoria</div><div class="ds">Eventos recentes com perfil, ação e resultado</div></div><div style="padding:10px;overflow:auto"><table style="width:100%;border-collapse:collapse;font-size:12px"><thead><tr><th style="text-align:left;padding:8px;border-bottom:1px solid #E6EDF0">Data/Hora</th><th style="text-align:left;padding:8px;border-bottom:1px solid #E6EDF0">Usuário</th><th style="text-align:left;padding:8px;border-bottom:1px solid #E6EDF0">Ação</th><th style="text-align:left;padding:8px;border-bottom:1px solid #E6EDF0">Resultado</th></tr></thead><tbody>'+(logs||'<tr><td colspan="4" style="padding:14px;color:#A2ABAE">Sem eventos.</td></tr>')+'</tbody></table></div></div>'
     +'</div>';
@@ -3042,9 +3267,7 @@ function render(){
   else if(state.tab==="presencial")v.innerHTML=viewPres();
   else if(state.tab==="interconsulta")v.innerHTML=viewInterconsulta();
   else if(state.tab==="agendamento")v.innerHTML=viewAgend();
-  else if(state.tab==="assistentes")v.innerHTML=viewAssistentes();
   else if(state.tab==="lembretes")v.innerHTML=viewLembretes();
-  else if(state.tab==="relatorios")v.innerHTML=viewRel();
   else if(state.tab==="lgpd")v.innerHTML=viewLgpd();
 }
 if(requireValidSession()){
