@@ -4,6 +4,13 @@ const DOCUMENT_ASSISTANT_IDS = {
   cirurgia:
     process.env.OPENAI_ASSISTANT_CIRURGIA ||
     "asst_SHFpXkdKVSzHuBFX6Bvbmo0W",
+  descricao_cirurgica:
+    process.env.OPENAI_ASSISTANT_DESCRICAO_CIRURGICA ||
+    process.env.OPENAI_ASSISTANT_CIRURGIA ||
+    "asst_SHFpXkdKVSzHuBFX6Bvbmo0W",
+  enfermagem_validacao:
+    process.env.OPENAI_ASSISTANT_ENFERMAGEM ||
+    "asst_yEi8eQhlTKpBgAqk6rsZVD1s",
   atestado:
     process.env.OPENAI_ASSISTANT_ATESTADO ||
     "asst_t1P4wDANmTdHSIKVoI1wMwFT",
@@ -197,6 +204,47 @@ export const AGENTS = {
       `Instruções do médico: ${instrucoes || "Solicitar procedimento ortopédico conforme indicação."}`,
   },
 
+  // 6.1) Descrição cirúrgica dedicada (assistente específico)
+  descricao_cirurgica: {
+    label: "Descrição Cirúrgica (Assistente)",
+    json: false,
+    system:
+      `${DISCLAIMER}\n` +
+      "Tarefa: elaborar uma DESCRIÇÃO CIRÚRGICA completa em linguagem técnica, " +
+      "estruturada em: preparação, técnica operatória, achados, hemostasia, síntese e conclusão. " +
+      "Não invente informações. Se faltar dado relevante, use [VERIFICAR].",
+    build: ({ paciente, anamnese, transcricao, instrucoes, triagem }) =>
+      `Paciente: ${JSON.stringify(paciente || {})}\n` +
+      `Anamnese/resumo: ${typeof anamnese === "object" ? JSON.stringify(anamnese) : anamnese || ""}\n` +
+      `Triagem opcional: ${triagemToText(triagem)}\n` +
+      `Transcrição cirúrgica/áudio transcrito: ${transcricao || "-"}\n` +
+      `Instruções do médico: ${instrucoes || "Gerar descrição cirúrgica formal para prontuário."}`,
+  },
+
+  // 6.2) Validação guiada de enfermagem por áudio
+  enfermagem_validacao: {
+    label: "Validação de Enfermagem por Áudio",
+    json: true,
+    system:
+      `${DISCLAIMER}\n` +
+      "Tarefa: validar uma resposta de enfermagem capturada por áudio para checklist/questionário perioperatório. " +
+      "Retorne APENAS JSON válido no formato:\n" +
+      `{
+  "validado": true,
+  "feedback": "",
+  "resumo_resposta": "",
+  "pendencias": [""],
+  "proxima_pergunta_sugerida": ""
+}\n` +
+      "Regras: validado=true se a resposta cobre minimamente a pergunta atual; " +
+      "se incompleta, validado=false e liste pendencias objetivas.",
+    build: ({ paciente, instrucoes, transcricao, anamnese }) =>
+      `Paciente: ${JSON.stringify(paciente || {})}\n` +
+      `Pergunta atual: ${instrucoes || ""}\n` +
+      `Resposta em áudio transcrita: ${transcricao || ""}\n` +
+      `Contexto prévio (opcional): ${typeof anamnese === "object" ? JSON.stringify(anamnese) : anamnese || "-"}`,
+  },
+
   // 7) Plano terapêutico
   terapias: {
     label: "Agente de Terapias",
@@ -320,13 +368,44 @@ export async function runAgent(agentId, input) {
   const content = completion.choices?.[0]?.message?.content ?? "";
 
   if (agent.json) {
+    const baseJsonText = String(content || "").trim();
+    let finalJsonText = baseJsonText;
+    let assistantApplied = false;
+    let assistantError = null;
+
+    try {
+      if (resolveAssistantId(agentId)) {
+        const assisted = await formatWithAssistant({ draft: finalJsonText, agentId, input });
+        const outputs = normalizeOutputs(assisted);
+        if (outputs[0]) finalJsonText = outputs[0];
+        assistantApplied = true;
+      }
+    } catch (err) {
+      assistantError = err.message || "Falha ao aplicar assistant finalizador";
+    }
+
     let data;
     try {
-      data = JSON.parse(content);
+      data = JSON.parse(finalJsonText);
     } catch {
-      data = { _raw: content, _erro: "JSON inválido retornado pelo modelo" };
+      try {
+        data = JSON.parse(baseJsonText);
+        assistantError = assistantError || "Assistant retornou JSON inválido; aplicado fallback para JSON base";
+      } catch {
+        data = { _raw: finalJsonText, _erro: "JSON inválido retornado pelo modelo" };
+      }
     }
-    return { ok: true, agent: agentId, data };
+    return {
+      ok: true,
+      agent: agentId,
+      data,
+      pipeline: {
+        draftBy: MODEL_TEXT,
+        finalByAssistant: resolveAssistantId(agentId) || null,
+        assistantApplied,
+        ...(assistantError ? { assistantError } : {}),
+      },
+    };
   }
 
   const draft = content.trim();
