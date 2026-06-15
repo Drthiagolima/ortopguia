@@ -7,6 +7,8 @@ import { rateLimit } from "express-rate-limit";
 import jwt from "jsonwebtoken";
 import { promises as fs } from "fs";
 import path from "path";
+import { execFile } from "child_process";
+import { promisify } from "util";
 import { fileURLToPath } from "url";
 import { runAgent, listAgents } from "./agents/agents.js";
 import { attachTranscriptionWS } from "./agents/transcribe.js";
@@ -69,6 +71,38 @@ const META_WHATSAPP_TOKEN = String(process.env.META_WHATSAPP_TOKEN || "").trim()
 const META_WHATSAPP_PHONE_NUMBER_ID = String(process.env.META_WHATSAPP_PHONE_NUMBER_ID || "").trim();
 const META_WHATSAPP_API_VERSION = String(process.env.META_WHATSAPP_API_VERSION || "v20.0").trim() || "v20.0";
 const META_WHATSAPP_GRAPH_URL = String(process.env.META_WHATSAPP_GRAPH_URL || "").trim();
+const SCAN_DIR = path.join(REPO_DIR, "scans");
+const SCANNER_ENABLED = String(process.env.SCANNER_ENABLED || "true").trim().toLowerCase() !== "false";
+const SCANNER_CAPTURE_FILE = path.join(REPO_DIR, "scanner-captures.json");
+const PROCESS_LINKS_FILE = path.join(REPO_DIR, "process-patient-links.json");
+const MV_MOCK_FILE = path.join(REPO_DIR, "mv-mock-patients.json");
+const SCANNER_CAPTURE_PAGE_FILE = path.join(__dirname, "scanner-capture.html");
+const MV_PROVIDER = String(process.env.MV_PROVIDER || "auto").trim().toLowerCase();
+const MV_BASE_URL = String(process.env.MV_BASE_URL || "").trim();
+const MV_PATIENT_BY_ATTENDIMENTO_PATH =
+  String(process.env.MV_PATIENT_BY_ATTENDIMENTO_PATH || "/api/pacientes/atendimentos/{numeroAtendimento}").trim() ||
+  "/api/pacientes/atendimentos/{numeroAtendimento}";
+const MV_AUTH_TYPE = String(process.env.MV_AUTH_TYPE || "bearer").trim().toLowerCase();
+const MV_TOKEN = String(process.env.MV_TOKEN || "").trim();
+const MV_AUTH_HEADER_NAME = String(process.env.MV_AUTH_HEADER_NAME || "Authorization").trim() || "Authorization";
+const MV_BASIC_USER = String(process.env.MV_BASIC_USER || "").trim();
+const MV_BASIC_PASSWORD = String(process.env.MV_BASIC_PASSWORD || "").trim();
+const MV_QUERY_TOKEN_PARAM = String(process.env.MV_QUERY_TOKEN_PARAM || "token").trim() || "token";
+const MV_REQUEST_EXTRA_HEADERS_JSON = String(process.env.MV_REQUEST_EXTRA_HEADERS_JSON || "").trim();
+const MV_PATIENT_PAYLOAD_PATH = String(process.env.MV_PATIENT_PAYLOAD_PATH || "").trim();
+const MV_FIELD_MAP_JSON = String(process.env.MV_FIELD_MAP_JSON || "").trim();
+const MV_TIMEOUT_MS = Number(process.env.MV_TIMEOUT_MS || 12000);
+const MV_RETRY_COUNT = Number(process.env.MV_RETRY_COUNT || 1);
+const AUTO_LINK_REQUIRE_FOUND = String(process.env.AUTO_LINK_REQUIRE_FOUND || "true").trim().toLowerCase() !== "false";
+const AUTO_LINK_REQUIRE_PROCESS_ID = String(process.env.AUTO_LINK_REQUIRE_PROCESS_ID || "true").trim().toLowerCase() !== "false";
+const AUTO_LINK_REQUIRE_PATIENT_NAME =
+  String(process.env.AUTO_LINK_REQUIRE_PATIENT_NAME || "false").trim().toLowerCase() === "true";
+const AUTO_LINK_BLOCK_DUPLICATE_IN_PROCESS =
+  String(process.env.AUTO_LINK_BLOCK_DUPLICATE_IN_PROCESS || "true").trim().toLowerCase() !== "false";
+const SCANNER_CAPTURE_MIN_LEN = Number(process.env.SCANNER_CAPTURE_MIN_LEN || 6);
+const SCANNER_CAPTURE_MAX_LEN = Number(process.env.SCANNER_CAPTURE_MAX_LEN || 20);
+const WIA_JPEG_FORMAT_ID = "{B96B3CAF-0728-11D3-9D7B-0000F81EF32E}";
+const execFileAsync = promisify(execFile);
 
 const defaultUsers = [
   {
@@ -204,6 +238,588 @@ async function appendOutboxLog(event) {
   await fs.mkdir(REPO_DIR, { recursive: true });
   const line = JSON.stringify({ at: new Date().toISOString(), ...event }) + "\n";
   await fs.appendFile(WHATSAPP_OUTBOX_FILE, line, "utf8");
+}
+
+function normalizeAttendanceNumber(input) {
+  return String(input || "").replace(/\D/g, "").trim();
+}
+
+function validateAttendanceNumber(input) {
+  const normalized = normalizeAttendanceNumber(input);
+  if (!normalized) {
+    return { ok: false, error: "Número de atendimento não informado", normalized: "" };
+  }
+  if (!/^\d+$/.test(normalized)) {
+    return { ok: false, error: "Número de atendimento inválido", normalized };
+  }
+  if (normalized.length < SCANNER_CAPTURE_MIN_LEN || normalized.length > SCANNER_CAPTURE_MAX_LEN) {
+    return {
+      ok: false,
+      error: `Número de atendimento deve ter entre ${SCANNER_CAPTURE_MIN_LEN} e ${SCANNER_CAPTURE_MAX_LEN} dígitos`,
+      normalized,
+    };
+  }
+  return { ok: true, normalized };
+}
+
+async function readScannerCaptures() {
+  const parsed = await readJsonFile(SCANNER_CAPTURE_FILE, { items: [] });
+  if (!parsed || typeof parsed !== "object") return { items: [] };
+  if (!Array.isArray(parsed.items)) parsed.items = [];
+  return parsed;
+}
+
+async function appendScannerCapture(item) {
+  const db = await readScannerCaptures();
+  db.items.push(item);
+  if (db.items.length > 300) {
+    db.items = db.items.slice(-300);
+  }
+  await writeJsonFile(SCANNER_CAPTURE_FILE, db);
+  return item;
+}
+
+async function readMvMockPatients() {
+  const parsed = await readJsonFile(MV_MOCK_FILE, { items: [] });
+  if (!parsed || typeof parsed !== "object") return { items: [] };
+  if (!Array.isArray(parsed.items)) parsed.items = [];
+  return parsed;
+}
+
+function resolveMvMode() {
+  if (MV_PROVIDER === "mock") return "mock";
+  if (MV_PROVIDER === "remote") return "remote";
+  return MV_BASE_URL ? "remote" : "mock";
+}
+
+function buildMvLookupUrl(numeroAtendimento) {
+  const base = MV_BASE_URL.replace(/\/$/, "");
+  const pathTemplate = MV_PATIENT_BY_ATTENDIMENTO_PATH.startsWith("/")
+    ? MV_PATIENT_BY_ATTENDIMENTO_PATH
+    : `/${MV_PATIENT_BY_ATTENDIMENTO_PATH}`;
+  const pathFilled = pathTemplate.replace("{numeroAtendimento}", encodeURIComponent(numeroAtendimento));
+  return `${base}${pathFilled}`;
+}
+
+function pickFirst(...values) {
+  for (const value of values) {
+    if (value === undefined || value === null) continue;
+    const str = String(value).trim();
+    if (str) return str;
+  }
+  return "";
+}
+
+function parseJsonObject(value, fallback = {}) {
+  try {
+    const parsed = JSON.parse(String(value || ""));
+    return parsed && typeof parsed === "object" && !Array.isArray(parsed) ? parsed : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+function getByPath(source, pathExpr) {
+  if (!source || typeof source !== "object") return undefined;
+  const raw = String(pathExpr || "").trim();
+  if (!raw) return undefined;
+  const parts = raw.split(".").filter(Boolean);
+  let current = source;
+  for (const part of parts) {
+    if (current === null || current === undefined) return undefined;
+    if (Array.isArray(current)) {
+      const idx = Number(part);
+      if (!Number.isFinite(idx) || idx < 0 || idx >= current.length) return undefined;
+      current = current[idx];
+      continue;
+    }
+    if (typeof current !== "object" || !(part in current)) return undefined;
+    current = current[part];
+  }
+  return current;
+}
+
+function coercePathList(value, fallback) {
+  if (Array.isArray(value) && value.length) {
+    return value.map((v) => String(v || "").trim()).filter(Boolean);
+  }
+  if (typeof value === "string" && value.trim()) {
+    return [value.trim()];
+  }
+  return fallback;
+}
+
+function resolveMvFieldMap() {
+  const defaults = {
+    numeroAtendimento: [
+      "numeroAtendimento",
+      "nrAtendimento",
+      "attendanceNumber",
+      "atendimento.numero",
+      "data.numeroAtendimento",
+    ],
+    pacienteIdMv: ["pacienteIdMv", "pacienteId", "idPaciente", "id", "patientId", "codigo", "data.idPaciente"],
+    nome: ["nome", "nomePaciente", "patientName", "paciente", "name", "data.nome"],
+    nascimento: ["nascimento", "dataNascimento", "birthDate", "dtNascimento", "data.nascimento"],
+    convenio: ["convenio", "plano", "insurance", "operadora", "data.convenio"],
+    unidade: ["unidade", "hospital", "clinica", "location", "data.unidade"],
+  };
+  const custom = parseJsonObject(MV_FIELD_MAP_JSON, {});
+  return {
+    numeroAtendimento: coercePathList(custom.numeroAtendimento, defaults.numeroAtendimento),
+    pacienteIdMv: coercePathList(custom.pacienteIdMv, defaults.pacienteIdMv),
+    nome: coercePathList(custom.nome, defaults.nome),
+    nascimento: coercePathList(custom.nascimento, defaults.nascimento),
+    convenio: coercePathList(custom.convenio, defaults.convenio),
+    unidade: coercePathList(custom.unidade, defaults.unidade),
+  };
+}
+
+function pickByPaths(payload, paths, fallback = "") {
+  for (const pathExpr of paths) {
+    const value = getByPath(payload, pathExpr);
+    const picked = pickFirst(value);
+    if (picked) return picked;
+  }
+  return fallback;
+}
+
+function encodeBasicAuth(user, pass) {
+  return Buffer.from(`${String(user || "")}:${String(pass || "")}`, "utf8").toString("base64");
+}
+
+function buildMvRequestHeaders() {
+  const headers = {
+    Accept: "application/json",
+  };
+  const extras = parseJsonObject(MV_REQUEST_EXTRA_HEADERS_JSON, {});
+  for (const [key, value] of Object.entries(extras)) {
+    if (!key) continue;
+    headers[String(key)] = String(value ?? "");
+  }
+
+  if (MV_AUTH_TYPE === "bearer" && MV_TOKEN) {
+    headers[MV_AUTH_HEADER_NAME] = `Bearer ${MV_TOKEN}`;
+  }
+  if (MV_AUTH_TYPE === "header" && MV_TOKEN) {
+    headers[MV_AUTH_HEADER_NAME] = MV_TOKEN;
+  }
+  if (MV_AUTH_TYPE === "basic" && MV_BASIC_USER) {
+    headers.Authorization = `Basic ${encodeBasicAuth(MV_BASIC_USER, MV_BASIC_PASSWORD)}`;
+  }
+  return headers;
+}
+
+function applyMvQueryAuth(url) {
+  if (MV_AUTH_TYPE !== "query" || !MV_TOKEN) return url;
+  const parsed = new URL(url);
+  parsed.searchParams.set(MV_QUERY_TOKEN_PARAM, MV_TOKEN);
+  return parsed.toString();
+}
+
+function normalizeMvPatient(raw, numeroAtendimento) {
+  if (!raw || typeof raw !== "object") return null;
+  const fieldMap = resolveMvFieldMap();
+  const patientIdMv = pickByPaths(raw, fieldMap.pacienteIdMv);
+  const nome = pickByPaths(raw, fieldMap.nome);
+  const nascimento = pickByPaths(raw, fieldMap.nascimento);
+  const convenio = pickByPaths(raw, fieldMap.convenio);
+  const unidade = pickByPaths(raw, fieldMap.unidade);
+  const mappedAttendance = pickByPaths(raw, fieldMap.numeroAtendimento, numeroAtendimento);
+  return {
+    numeroAtendimento: normalizeAttendanceNumber(mappedAttendance),
+    pacienteIdMv: patientIdMv || `mv_${normalizeAttendanceNumber(numeroAtendimento)}`,
+    nome: nome || "Paciente",
+    nascimento,
+    convenio,
+    unidade,
+  };
+}
+
+function normalizeMvPatientWithFieldMap(raw, numeroAtendimento, fieldMapOverride = null) {
+  if (!raw || typeof raw !== "object") return null;
+  const baseMap = resolveMvFieldMap();
+  const custom = fieldMapOverride && typeof fieldMapOverride === "object" ? fieldMapOverride : {};
+  const effectiveMap = {
+    numeroAtendimento: coercePathList(custom.numeroAtendimento, baseMap.numeroAtendimento),
+    pacienteIdMv: coercePathList(custom.pacienteIdMv, baseMap.pacienteIdMv),
+    nome: coercePathList(custom.nome, baseMap.nome),
+    nascimento: coercePathList(custom.nascimento, baseMap.nascimento),
+    convenio: coercePathList(custom.convenio, baseMap.convenio),
+    unidade: coercePathList(custom.unidade, baseMap.unidade),
+  };
+
+  const patientIdMv = pickByPaths(raw, effectiveMap.pacienteIdMv);
+  const nome = pickByPaths(raw, effectiveMap.nome);
+  const nascimento = pickByPaths(raw, effectiveMap.nascimento);
+  const convenio = pickByPaths(raw, effectiveMap.convenio);
+  const unidade = pickByPaths(raw, effectiveMap.unidade);
+  const mappedAttendance = pickByPaths(raw, effectiveMap.numeroAtendimento, numeroAtendimento);
+  return {
+    numeroAtendimento: normalizeAttendanceNumber(mappedAttendance),
+    pacienteIdMv: patientIdMv || `mv_${normalizeAttendanceNumber(numeroAtendimento)}`,
+    nome: nome || "Paciente",
+    nascimento,
+    convenio,
+    unidade,
+  };
+}
+
+function extractPatientFromMvPayload(payload) {
+  if (!payload || typeof payload !== "object") return null;
+  if (MV_PATIENT_PAYLOAD_PATH) {
+    const byCustomPath = getByPath(payload, MV_PATIENT_PAYLOAD_PATH);
+    if (byCustomPath && typeof byCustomPath === "object") return byCustomPath;
+  }
+  if (payload.patient && typeof payload.patient === "object") return payload.patient;
+  if (payload.data && typeof payload.data === "object") {
+    if (payload.data.patient && typeof payload.data.patient === "object") return payload.data.patient;
+    return payload.data;
+  }
+  return payload;
+}
+
+async function fetchJsonWithTimeout(url, init = {}, timeoutMs = 12000) {
+  const timeout = Number.isFinite(timeoutMs) ? Math.max(1000, timeoutMs) : 12000;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeout);
+  try {
+    return await fetch(url, { ...init, signal: controller.signal });
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+async function findMvPatientRemote(numeroAtendimento) {
+  if (!MV_BASE_URL) {
+    throw new Error("MV_BASE_URL não configurado para integração remota");
+  }
+
+  const url = applyMvQueryAuth(buildMvLookupUrl(numeroAtendimento));
+  const maxAttempts = Number.isFinite(MV_RETRY_COUNT) ? Math.max(0, MV_RETRY_COUNT) + 1 : 2;
+  let lastErr = null;
+
+  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+    try {
+      const response = await fetchJsonWithTimeout(
+        url,
+        {
+          method: "GET",
+          headers: buildMvRequestHeaders(),
+        },
+        MV_TIMEOUT_MS
+      );
+
+      if (response.status === 404) return null;
+
+      const rawText = await response.text();
+      let payload = null;
+      try {
+        payload = rawText ? JSON.parse(rawText) : null;
+      } catch {
+        payload = { raw: rawText };
+      }
+
+      if (!response.ok) {
+        const detail = payload && typeof payload === "object" ? pickFirst(payload.error, payload.message) : "";
+        throw new Error(`MV respondeu ${response.status}${detail ? `: ${detail}` : ""}`);
+      }
+
+      const extracted = extractPatientFromMvPayload(payload);
+      return normalizeMvPatient(extracted, numeroAtendimento);
+    } catch (err) {
+      lastErr = err;
+      if (attempt < maxAttempts) {
+        await new Promise((resolve) => setTimeout(resolve, 350 * attempt));
+      }
+    }
+  }
+
+  throw lastErr || new Error("Falha desconhecida ao consultar MV remoto");
+}
+
+async function findMvPatientByAttendance(numeroAtendimento) {
+  const mode = resolveMvMode();
+  if (mode === "remote") {
+    const patient = await findMvPatientRemote(numeroAtendimento);
+    return {
+      source: "remote",
+      patient,
+    };
+  }
+
+  const mockDb = await readMvMockPatients();
+  const found = mockDb.items.find(
+    (p) => normalizeAttendanceNumber(p && p.numeroAtendimento) === normalizeAttendanceNumber(numeroAtendimento)
+  );
+  if (!found) {
+    return {
+      source: "mock",
+      patient: null,
+    };
+  }
+  return {
+    source: "mock",
+    patient: {
+      numeroAtendimento: normalizeAttendanceNumber(found.numeroAtendimento),
+      pacienteIdMv:
+        String(found.pacienteIdMv || "").trim() || `mv_${normalizeAttendanceNumber(found.numeroAtendimento)}`,
+      nome: String(found.nome || "Paciente").trim() || "Paciente",
+      nascimento: String(found.nascimento || "").trim(),
+      convenio: String(found.convenio || "").trim(),
+      unidade: String(found.unidade || "").trim(),
+    },
+  };
+}
+
+async function appendProcessLink(item) {
+  const parsed = await readJsonFile(PROCESS_LINKS_FILE, { items: [] });
+  const db = !parsed || typeof parsed !== "object" ? { items: [] } : parsed;
+  if (!Array.isArray(db.items)) db.items = [];
+  db.items.push(item);
+  await writeJsonFile(PROCESS_LINKS_FILE, db);
+  return item;
+}
+
+async function readProcessLinks() {
+  const parsed = await readJsonFile(PROCESS_LINKS_FILE, { items: [] });
+  if (!parsed || typeof parsed !== "object") return { items: [] };
+  if (!Array.isArray(parsed.items)) parsed.items = [];
+  return parsed;
+}
+
+function buildProcessLink({ processoId, numeroAtendimento, pacienteIdMv, pacienteNome }) {
+  return {
+    id: "link_" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+    processoId,
+    numeroAtendimento,
+    pacienteIdMv,
+    pacienteNome,
+    linkedAt: new Date().toISOString(),
+  };
+}
+
+function evaluateAutoLinkRules({ processoId, patient, existingLinks }) {
+  const reasons = [];
+  if (AUTO_LINK_REQUIRE_PROCESS_ID && !processoId) {
+    reasons.push("processoId ausente");
+  }
+  if (AUTO_LINK_REQUIRE_FOUND && !patient) {
+    reasons.push("paciente não encontrado no MV");
+  }
+  if (AUTO_LINK_REQUIRE_PATIENT_NAME && !String((patient && patient.nome) || "").trim()) {
+    reasons.push("nome do paciente ausente no retorno do MV");
+  }
+
+  if (AUTO_LINK_BLOCK_DUPLICATE_IN_PROCESS && patient && Array.isArray(existingLinks)) {
+    const exists = existingLinks.some(
+      (item) =>
+        String(item.processoId || "") === String(processoId || "") &&
+        String(item.pacienteIdMv || "") === String(patient.pacienteIdMv || "")
+    );
+    if (exists) {
+      reasons.push("vínculo já existente para este processo e paciente");
+    }
+  }
+
+  return {
+    allowed: reasons.length === 0,
+    reasons,
+  };
+}
+
+async function readScannerCapturePageHtml() {
+  try {
+    return await fs.readFile(SCANNER_CAPTURE_PAGE_FILE, "utf8");
+  } catch {
+    return "<!doctype html><html><body><h1>Arquivo scanner-capture.html não encontrado</h1></body></html>";
+  }
+}
+
+function sanitizeScanBaseName(input) {
+  const raw = String(input || "").trim().toLowerCase();
+  const safe = raw.replace(/[^a-z0-9-_]/g, "").slice(0, 50);
+  return safe || "scan";
+}
+
+function buildScanFilePath(fileNameHint) {
+  const base = sanitizeScanBaseName(fileNameHint);
+  const stamp = new Date().toISOString().replace(/[:.]/g, "-");
+  return path.join(SCAN_DIR, `${base}-${stamp}.jpg`);
+}
+
+function escapePowerShellSingleQuoted(value) {
+  return String(value || "").replace(/'/g, "''");
+}
+
+async function runPowerShell(script) {
+  const { stdout, stderr } = await execFileAsync(
+    "powershell.exe",
+    ["-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", script],
+    {
+      windowsHide: true,
+      maxBuffer: 4 * 1024 * 1024,
+    }
+  );
+
+  return {
+    stdout: String(stdout || "").trim(),
+    stderr: String(stderr || "").trim(),
+  };
+}
+
+async function runPowerShellJson(script) {
+  const { stdout } = await runPowerShell(script);
+  if (!stdout) return null;
+  return JSON.parse(stdout);
+}
+
+async function listWiaScanners() {
+  if (process.platform !== "win32") return [];
+
+  const script = `
+$ErrorActionPreference = 'Stop'
+$manager = New-Object -ComObject WIA.DeviceManager
+$scanners = @(
+  $manager.DeviceInfos |
+    Where-Object { $_.Type -eq 1 } |
+    ForEach-Object {
+      [PSCustomObject]@{
+        name = [string]$_.Properties.Item('Name').Value
+        deviceId = [string]$_.DeviceID
+      }
+    }
+)
+$scanners | ConvertTo-Json -Compress
+`;
+
+  const parsed = await runPowerShellJson(script);
+  if (!parsed) return [];
+  return Array.isArray(parsed) ? parsed : [parsed];
+}
+
+async function getScannerDiagnostics() {
+  if (process.platform !== "win32") {
+    return {
+      platform: process.platform,
+      wiaService: null,
+      imagingDevices: [],
+    };
+  }
+
+  const serviceScript = `
+$svc = Get-Service -Name stisvc -ErrorAction SilentlyContinue
+if (-not $svc) {
+  [PSCustomObject]@{ exists = $false; status = ''; startType = '' } | ConvertTo-Json -Compress
+  return
+}
+$cim = Get-CimInstance -ClassName Win32_Service -Filter "Name='stisvc'" -ErrorAction SilentlyContinue
+[PSCustomObject]@{
+  exists = $true
+  status = [string]$svc.Status
+  startType = [string]($cim.StartMode)
+} | ConvertTo-Json -Compress
+`;
+
+  const devicesScript = `
+$devices = @(
+  Get-CimInstance Win32_PnPEntity -ErrorAction SilentlyContinue |
+    Where-Object {
+      ($_.PNPClass -eq 'Image') -or
+      ($_.Name -match '(?i)scanner|scan|impressora|mfp|multifuncional')
+    } |
+    Select-Object Name, PNPClass, Status, DeviceID
+)
+$devices | ConvertTo-Json -Compress
+`;
+
+  const wiaServiceRaw = await runPowerShellJson(serviceScript);
+  const imagingDevicesRaw = await runPowerShellJson(devicesScript);
+
+  const imagingDevices = !imagingDevicesRaw
+    ? []
+    : Array.isArray(imagingDevicesRaw)
+      ? imagingDevicesRaw
+      : [imagingDevicesRaw];
+
+  return {
+    platform: process.platform,
+    wiaService: wiaServiceRaw || { exists: false, status: "", startType: "" },
+    imagingDevices,
+  };
+}
+
+async function tryStartWiaService() {
+  if (process.platform !== "win32") {
+    return { ok: false, message: "Somente Windows suporta serviço WIA." };
+  }
+
+  const script = `
+$ErrorActionPreference = 'Stop'
+$svc = Get-Service -Name stisvc -ErrorAction SilentlyContinue
+if (-not $svc) {
+  [PSCustomObject]@{ ok = $false; message = 'Serviço WIA (stisvc) não encontrado.' } | ConvertTo-Json -Compress
+  return
+}
+if ($svc.Status -ne 'Running') {
+  Start-Service -Name stisvc -ErrorAction SilentlyContinue
+}
+$svc = Get-Service -Name stisvc
+[PSCustomObject]@{
+  ok = ($svc.Status -eq 'Running')
+  status = [string]$svc.Status
+  message = 'Tentativa de inicialização concluída.'
+} | ConvertTo-Json -Compress
+`;
+
+  const parsed = await runPowerShellJson(script);
+  return parsed || { ok: false, message: "Não foi possível validar o serviço WIA." };
+}
+
+async function scanFirstWiaDevice(outputFilePath, preferredDeviceId = "") {
+  if (process.platform !== "win32") {
+    const err = new Error("Scanner via WIA está disponível apenas no Windows.");
+    err.status = 400;
+    throw err;
+  }
+
+  await fs.mkdir(SCAN_DIR, { recursive: true });
+  const escapedPath = escapePowerShellSingleQuoted(outputFilePath);
+  const escapedPreferredId = escapePowerShellSingleQuoted(preferredDeviceId);
+
+  const script = `
+$ErrorActionPreference = 'Stop'
+$out = '${escapedPath}'
+$preferredId = '${escapedPreferredId}'
+$manager = New-Object -ComObject WIA.DeviceManager
+$scanner = $null
+if ($preferredId) {
+  $scanner = $manager.DeviceInfos |
+    Where-Object { $_.Type -eq 1 -and $_.DeviceID -eq $preferredId } |
+    Select-Object -First 1
+}
+if (-not $scanner) {
+  $scanner = $manager.DeviceInfos | Where-Object { $_.Type -eq 1 } | Select-Object -First 1
+}
+if (-not $scanner) { throw 'Nenhum scanner WIA encontrado via USB.' }
+$device = $scanner.Connect()
+$item = $device.Items.Item(1)
+$dialog = New-Object -ComObject WIA.CommonDialog
+$image = $dialog.ShowTransfer($item, '${WIA_JPEG_FORMAT_ID}', $false)
+if (-not $image) { throw 'Digitalização cancelada.' }
+$image.SaveFile($out)
+Write-Output $out
+`;
+
+  try {
+    await runPowerShell(script);
+  } catch (err) {
+    const message = String((err && err.message) || "");
+    if (message.includes("Nenhum scanner WIA encontrado via USB.")) {
+      err.status = 404;
+    }
+    throw err;
+  }
 }
 
 function normalizePhoneBR(input) {
@@ -790,55 +1406,21 @@ function authorizeRepository(req, res, next) {
   return res.status(401).json({ ok: false, error: "JWT obrigatório para repositório" });
 }
 
-// CORS — evita erro 500 em preflight e permite domínios oficiais de produção.
-const defaultAllowedOrigins = [
-  "https://simplesurgery.com.br",
-  "https://www.simplesurgery.com.br",
-  "https://api.ortopguia.com.br",
-  "https://api.ortoguia.com.br",
-  "https://simplesurgery.vercel.app",
-];
-
-const envAllowedOrigins = (process.env.ALLOWED_ORIGINS || "")
+// CORS — apenas origens permitidas
+const allowed = (process.env.ALLOWED_ORIGINS || "")
   .split(",")
   .map((s) => s.trim())
   .filter(Boolean);
 
-const allowedOrigins = Array.from(new Set([...defaultAllowedOrigins, ...envAllowedOrigins]));
-
-function isOriginAllowed(origin) {
-  if (!origin) return true;
-  if (allowedOrigins.length === 0) return true;
-  return allowedOrigins.includes(origin);
-}
-
-const corsOptions = {
-  origin(origin, cb) {
-    // Nunca lançar erro aqui para não transformar preflight em HTTP 500.
-    if (isOriginAllowed(origin)) return cb(null, true);
-    return cb(null, false);
-  },
-  methods: ["GET", "HEAD", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-  allowedHeaders: [
-    "Content-Type",
-    "Authorization",
-    "X-Requested-With",
-    "X-User-Id",
-    "X-User-Role",
-    "X-Doctor-Id",
-  ],
-  optionsSuccessStatus: 204,
-  maxAge: 86400,
-};
-
-app.use(cors(corsOptions));
-app.options("*", cors(corsOptions));
-
-app.use((req, res, next) => {
-  const origin = String(req.headers.origin || "").trim();
-  if (!origin || isOriginAllowed(origin)) return next();
-  return res.status(403).json({ ok: false, error: `Origem não permitida pelo CORS: ${origin}` });
-});
+app.use(
+  cors({
+    origin(origin, cb) {
+      // permite ferramentas locais (sem origin) e origens da lista
+      if (!origin || allowed.length === 0 || allowed.includes(origin)) return cb(null, true);
+      return cb(new Error("Origem não permitida pelo CORS: " + origin));
+    },
+  })
+);
 
 // Saúde do serviço
 app.get("/api/health", (_req, res) => {
@@ -848,6 +1430,382 @@ app.get("/api/health", (_req, res) => {
 // Lista de agentes disponíveis
 app.get("/api/agents", (_req, res) => {
   res.json({ ok: true, agents: listAgents() });
+});
+
+// Página de captura (scanner HID tipo teclado)
+app.get("/scanner/capture", async (_req, res) => {
+  const html = await readScannerCapturePageHtml();
+  res.setHeader("Content-Type", "text/html; charset=utf-8");
+  res.status(200).send(html);
+});
+
+app.get("/api/scanner/captures", async (req, res) => {
+  try {
+    const limitRaw = Number(req.query.limit || 20);
+    const limit = Number.isFinite(limitRaw) ? Math.max(1, Math.min(200, Math.floor(limitRaw))) : 20;
+    const db = await readScannerCaptures();
+    return res.json({ ok: true, data: { items: db.items.slice(-limit) } });
+  } catch (err) {
+    return res.status(500).json({ ok: false, error: err.message || "Erro ao ler histórico de capturas" });
+  }
+});
+
+app.post("/api/scanner/capture", async (req, res) => {
+  try {
+    const body = req.body || {};
+    const rawInput = String(body.rawInput || body.numeroAtendimento || "").trim();
+    const source = String(body.source || "scanner-hid").trim() || "scanner-hid";
+    const checked = validateAttendanceNumber(rawInput);
+    if (!checked.ok) {
+      return res.status(400).json({ ok: false, error: checked.error, data: { rawInput, normalized: checked.normalized } });
+    }
+
+    const capture = {
+      id: "cap_" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+      numeroAtendimento: checked.normalized,
+      rawInput,
+      source,
+      capturedAt: new Date().toISOString(),
+    };
+    await appendScannerCapture(capture);
+
+    return res.json({
+      ok: true,
+      data: {
+        id: capture.id,
+        numeroAtendimento: capture.numeroAtendimento,
+        source: capture.source,
+        capturedAt: capture.capturedAt,
+      },
+    });
+  } catch (err) {
+    return res.status(500).json({ ok: false, error: err.message || "Erro ao capturar número de atendimento" });
+  }
+});
+
+app.post("/api/scanner/capture-and-link", async (req, res) => {
+  try {
+    const body = req.body || {};
+    const processoId = String(body.processoId || "").trim();
+    const rawInput = String(body.rawInput || body.numeroAtendimento || "").trim();
+    const source = String(body.source || "scanner-hid").trim() || "scanner-hid";
+
+    const checked = validateAttendanceNumber(rawInput);
+    if (!checked.ok) {
+      return res.status(400).json({ ok: false, error: checked.error, data: { rawInput, normalized: checked.normalized } });
+    }
+
+    const capture = {
+      id: "cap_" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+      numeroAtendimento: checked.normalized,
+      rawInput,
+      source,
+      capturedAt: new Date().toISOString(),
+    };
+    await appendScannerCapture(capture);
+
+    const mvResult = await findMvPatientByAttendance(checked.normalized);
+    const patient = mvResult && mvResult.patient ? mvResult.patient : null;
+    const processLinksDb = await readProcessLinks();
+    const rules = evaluateAutoLinkRules({
+      processoId,
+      patient,
+      existingLinks: processLinksDb.items,
+    });
+
+    if (!rules.allowed) {
+      return res.json({
+        ok: true,
+        data: {
+          linked: false,
+          capture,
+          mv: {
+            found: !!patient,
+            source: (mvResult && mvResult.source) || resolveMvMode(),
+            patient,
+          },
+          autoLink: {
+            allowed: false,
+            reasons: rules.reasons,
+            rules: {
+              requireFound: AUTO_LINK_REQUIRE_FOUND,
+              requireProcessId: AUTO_LINK_REQUIRE_PROCESS_ID,
+              requirePatientName: AUTO_LINK_REQUIRE_PATIENT_NAME,
+              blockDuplicateInProcess: AUTO_LINK_BLOCK_DUPLICATE_IN_PROCESS,
+            },
+          },
+        },
+      });
+    }
+
+    const link = buildProcessLink({
+      processoId,
+      numeroAtendimento: checked.normalized,
+      pacienteIdMv: String(patient.pacienteIdMv || "").trim(),
+      pacienteNome: String(patient.nome || "").trim(),
+    });
+    await appendProcessLink(link);
+
+    return res.json({
+      ok: true,
+      data: {
+        linked: true,
+        capture,
+        mv: {
+          found: true,
+          source: mvResult.source,
+          patient,
+        },
+        autoLink: {
+          allowed: true,
+          reasons: [],
+        },
+        link,
+      },
+    });
+  } catch (err) {
+    return res.status(500).json({ ok: false, error: err.message || "Erro no fluxo de captura e vínculo" });
+  }
+});
+
+app.get("/api/mv/pacientes/:numeroAtendimento", async (req, res) => {
+  try {
+    const numeroAtendimento = normalizeAttendanceNumber(req.params.numeroAtendimento);
+    const checked = validateAttendanceNumber(numeroAtendimento);
+    if (!checked.ok) {
+      return res.status(400).json({ ok: false, error: checked.error });
+    }
+
+    const result = await findMvPatientByAttendance(checked.normalized);
+    if (!result || !result.patient) {
+      const source = (result && result.source) || resolveMvMode();
+      return res.json({
+        ok: true,
+        data: {
+          found: false,
+          numeroAtendimento: checked.normalized,
+          patient: null,
+          source,
+          message:
+            source === "mock"
+              ? "Paciente não localizado no mock MV. Configure data/mv-mock-patients.json para teste local."
+              : "Paciente não localizado no MV remoto para este número de atendimento.",
+        },
+      });
+    }
+
+    return res.json({
+      ok: true,
+      data: {
+        found: true,
+        numeroAtendimento: checked.normalized,
+        source: result.source,
+        patient: result.patient,
+      },
+    });
+  } catch (err) {
+    return res.status(500).json({ ok: false, error: err.message || "Erro ao consultar paciente no MV" });
+  }
+});
+
+app.get("/api/mv/status", (_req, res) => {
+  const mode = resolveMvMode();
+  const fieldMap = resolveMvFieldMap();
+  return res.json({
+    ok: true,
+    data: {
+      mode,
+      provider: MV_PROVIDER,
+      authType: MV_AUTH_TYPE,
+      authHeaderName: MV_AUTH_HEADER_NAME,
+      baseUrlConfigured: !!MV_BASE_URL,
+      tokenConfigured: !!MV_TOKEN,
+      timeoutMs: MV_TIMEOUT_MS,
+      retryCount: MV_RETRY_COUNT,
+      patientByAtendimentoPath: MV_PATIENT_BY_ATTENDIMENTO_PATH,
+      patientPayloadPath: MV_PATIENT_PAYLOAD_PATH || null,
+      fieldMap,
+      autoLinkRules: {
+        requireFound: AUTO_LINK_REQUIRE_FOUND,
+        requireProcessId: AUTO_LINK_REQUIRE_PROCESS_ID,
+        requirePatientName: AUTO_LINK_REQUIRE_PATIENT_NAME,
+        blockDuplicateInProcess: AUTO_LINK_BLOCK_DUPLICATE_IN_PROCESS,
+      },
+    },
+  });
+});
+
+app.post("/api/mv/map-preview", (req, res) => {
+  try {
+    const body = req.body || {};
+    const numeroAtendimento = normalizeAttendanceNumber(body.numeroAtendimento || "000000");
+    const payload = body.payload;
+    const payloadPath = String(body.payloadPath || "").trim();
+    const fieldMap = body.fieldMap && typeof body.fieldMap === "object" ? body.fieldMap : null;
+
+    if (!payload || typeof payload !== "object") {
+      return res.status(400).json({ ok: false, error: "payload JSON é obrigatório em body.payload" });
+    }
+
+    const extracted = payloadPath
+      ? getByPath(payload, payloadPath)
+      : extractPatientFromMvPayload(payload);
+
+    if (!extracted || typeof extracted !== "object") {
+      return res.status(400).json({
+        ok: false,
+        error: "Não foi possível extrair objeto de paciente do payload",
+        data: {
+          payloadPathUsed: payloadPath || MV_PATIENT_PAYLOAD_PATH || "(auto)",
+        },
+      });
+    }
+
+    const normalized = normalizeMvPatientWithFieldMap(extracted, numeroAtendimento, fieldMap);
+    const effectiveFieldMap = fieldMap && typeof fieldMap === "object" ? {
+      numeroAtendimento: coercePathList(fieldMap.numeroAtendimento, resolveMvFieldMap().numeroAtendimento),
+      pacienteIdMv: coercePathList(fieldMap.pacienteIdMv, resolveMvFieldMap().pacienteIdMv),
+      nome: coercePathList(fieldMap.nome, resolveMvFieldMap().nome),
+      nascimento: coercePathList(fieldMap.nascimento, resolveMvFieldMap().nascimento),
+      convenio: coercePathList(fieldMap.convenio, resolveMvFieldMap().convenio),
+      unidade: coercePathList(fieldMap.unidade, resolveMvFieldMap().unidade),
+    } : resolveMvFieldMap();
+
+    return res.json({
+      ok: true,
+      data: {
+        payloadPathUsed: payloadPath || MV_PATIENT_PAYLOAD_PATH || "(auto)",
+        effectiveFieldMap,
+        extracted,
+        normalizedPatient: normalized,
+      },
+    });
+  } catch (err) {
+    return res.status(500).json({ ok: false, error: err.message || "Erro ao pré-visualizar mapeamento MV" });
+  }
+});
+
+app.post("/api/processos/:processoId/vincular-paciente", async (req, res) => {
+  try {
+    const processoId = String(req.params.processoId || "").trim();
+    const body = req.body || {};
+    const checked = validateAttendanceNumber(body.numeroAtendimento || "");
+    const pacienteIdMv = String(body.pacienteIdMv || "").trim();
+    const pacienteNome = String(body.pacienteNome || "").trim();
+
+    if (!processoId) {
+      return res.status(400).json({ ok: false, error: "processoId é obrigatório" });
+    }
+    if (!checked.ok) {
+      return res.status(400).json({ ok: false, error: checked.error });
+    }
+    if (!pacienteIdMv) {
+      return res.status(400).json({ ok: false, error: "pacienteIdMv é obrigatório" });
+    }
+
+    const processLinksDb = await readProcessLinks();
+    const rules = evaluateAutoLinkRules({
+      processoId,
+      patient: {
+        pacienteIdMv,
+        nome: pacienteNome,
+      },
+      existingLinks: processLinksDb.items,
+    });
+    if (!rules.allowed) {
+      return res.status(409).json({ ok: false, error: "Regras de vínculo não atendidas", data: { reasons: rules.reasons } });
+    }
+
+    const link = buildProcessLink({
+      processoId,
+      numeroAtendimento: checked.normalized,
+      pacienteIdMv,
+      pacienteNome,
+    });
+
+    await appendProcessLink(link);
+    return res.json({ ok: true, data: link });
+  } catch (err) {
+    return res.status(500).json({ ok: false, error: err.message || "Erro ao vincular paciente ao processo" });
+  }
+});
+
+// Scanner USB (WIA no Windows)
+app.use("/api/scanner/files", express.static(SCAN_DIR));
+
+app.get("/api/scanner/status", async (_req, res) => {
+  try {
+    if (!SCANNER_ENABLED) {
+      return res.status(503).json({ ok: false, error: "Scanner desativado por configuração (SCANNER_ENABLED=false)" });
+    }
+
+    const scanners = await listWiaScanners();
+    const diagnostics = await getScannerDiagnostics();
+    return res.json({
+      ok: true,
+      data: {
+        platform: process.platform,
+        scannerEnabled: SCANNER_ENABLED,
+        scanners,
+        scannerFound: scanners.length > 0,
+        diagnostics,
+      },
+    });
+  } catch (err) {
+    return res.status(500).json({ ok: false, error: err.message || "Erro ao consultar scanner" });
+  }
+});
+
+app.post("/api/scanner/repair-wia", async (_req, res) => {
+  try {
+    if (!SCANNER_ENABLED) {
+      return res.status(503).json({ ok: false, error: "Scanner desativado por configuração (SCANNER_ENABLED=false)" });
+    }
+
+    const repair = await tryStartWiaService();
+    const diagnostics = await getScannerDiagnostics();
+    const scanners = await listWiaScanners();
+
+    return res.json({
+      ok: true,
+      data: {
+        repair,
+        diagnostics,
+        scanners,
+        scannerFound: scanners.length > 0,
+      },
+    });
+  } catch (err) {
+    return res.status(500).json({ ok: false, error: err.message || "Erro ao reparar serviço WIA" });
+  }
+});
+
+app.post("/api/scanner/scan", async (req, res) => {
+  try {
+    if (!SCANNER_ENABLED) {
+      return res.status(503).json({ ok: false, error: "Scanner desativado por configuração (SCANNER_ENABLED=false)" });
+    }
+
+    const fileNameHint = (req.body || {}).fileName || "scan";
+    const preferredDeviceId = String((req.body || {}).deviceId || "").trim();
+    const outputPath = buildScanFilePath(fileNameHint);
+    await scanFirstWiaDevice(outputPath, preferredDeviceId);
+
+    const stat = await fs.stat(outputPath);
+    const fileName = path.basename(outputPath);
+    return res.json({
+      ok: true,
+      data: {
+        fileName,
+        sizeBytes: stat.size,
+        savedAt: outputPath,
+        url: `/api/scanner/files/${encodeURIComponent(fileName)}`,
+      },
+    });
+  } catch (err) {
+    const status = err.status || 500;
+    return res.status(status).json({ ok: false, error: err.message || "Erro ao digitalizar documento" });
+  }
 });
 
 /**
