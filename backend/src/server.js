@@ -1,4 +1,4 @@
-import express from "express";
+﻿import express from "express";
 import cors from "cors";
 import http from "http";
 import dotenv from "dotenv";
@@ -33,7 +33,7 @@ const apiLimiter = rateLimit({
   max: 300,
   standardHeaders: true,
   legacyHeaders: false,
-  message: { ok: false, error: "Muitas requisições. Tente novamente em instantes." },
+  message: { ok: false, error: "Muitas requisi├º├Áes. Tente novamente em instantes." },
 });
 
 const aiLimiter = rateLimit({
@@ -41,7 +41,7 @@ const aiLimiter = rateLimit({
   max: 40,
   standardHeaders: true,
   legacyHeaders: false,
-  message: { ok: false, error: "Limite temporário de uso excedido." },
+  message: { ok: false, error: "Limite tempor├írio de uso excedido." },
 });
 
 app.use("/api", apiLimiter);
@@ -186,7 +186,7 @@ function parseBearerToken(req) {
 
 function signAccessToken(user) {
   if (!JWT_SECRET) {
-    throw new Error("JWT_SECRET não configurado");
+    throw new Error("JWT_SECRET n├úo configurado");
   }
   return jwt.sign(
     {
@@ -247,15 +247,15 @@ function normalizeAttendanceNumber(input) {
 function validateAttendanceNumber(input) {
   const normalized = normalizeAttendanceNumber(input);
   if (!normalized) {
-    return { ok: false, error: "Número de atendimento não informado", normalized: "" };
+    return { ok: false, error: "N├║mero de atendimento n├úo informado", normalized: "" };
   }
   if (!/^\d+$/.test(normalized)) {
-    return { ok: false, error: "Número de atendimento inválido", normalized };
+    return { ok: false, error: "N├║mero de atendimento inv├ílido", normalized };
   }
   if (normalized.length < SCANNER_CAPTURE_MIN_LEN || normalized.length > SCANNER_CAPTURE_MAX_LEN) {
     return {
       ok: false,
-      error: `Número de atendimento deve ter entre ${SCANNER_CAPTURE_MIN_LEN} e ${SCANNER_CAPTURE_MAX_LEN} dígitos`,
+      error: `N├║mero de atendimento deve ter entre ${SCANNER_CAPTURE_MIN_LEN} e ${SCANNER_CAPTURE_MAX_LEN} d├¡gitos`,
       normalized,
     };
   }
@@ -492,7 +492,7 @@ async function fetchJsonWithTimeout(url, init = {}, timeoutMs = 12000) {
 
 async function findMvPatientRemote(numeroAtendimento) {
   if (!MV_BASE_URL) {
-    throw new Error("MV_BASE_URL não configurado para integração remota");
+    throw new Error("MV_BASE_URL n├úo configurado para integra├º├úo remota");
   }
 
   const url = applyMvQueryAuth(buildMvLookupUrl(numeroAtendimento));
@@ -605,7 +605,7 @@ function evaluateAutoLinkRules({ processoId, patient, existingLinks }) {
     reasons.push("processoId ausente");
   }
   if (AUTO_LINK_REQUIRE_FOUND && !patient) {
-    reasons.push("paciente não encontrado no MV");
+    reasons.push("paciente n├úo encontrado no MV");
   }
   if (AUTO_LINK_REQUIRE_PATIENT_NAME && !String((patient && patient.nome) || "").trim()) {
     reasons.push("nome do paciente ausente no retorno do MV");
@@ -618,7 +618,7 @@ function evaluateAutoLinkRules({ processoId, patient, existingLinks }) {
         String(item.pacienteIdMv || "") === String(patient.pacienteIdMv || "")
     );
     if (exists) {
-      reasons.push("vínculo já existente para este processo e paciente");
+      reasons.push("v├¡nculo j├í existente para este processo e paciente");
     }
   }
 
@@ -632,7 +632,7 @@ async function readScannerCapturePageHtml() {
   try {
     return await fs.readFile(SCANNER_CAPTURE_PAGE_FILE, "utf8");
   } catch {
-    return "<!doctype html><html><body><h1>Arquivo scanner-capture.html não encontrado</h1></body></html>";
+    return "<!doctype html><html><body><h1>Arquivo scanner-capture.html n├úo encontrado</h1></body></html>";
   }
 }
 
@@ -751,14 +751,14 @@ $devices | ConvertTo-Json -Compress
 
 async function tryStartWiaService() {
   if (process.platform !== "win32") {
-    return { ok: false, message: "Somente Windows suporta serviço WIA." };
+    return { ok: false, message: "Somente Windows suporta servi├ºo WIA." };
   }
 
   const script = `
 $ErrorActionPreference = 'Stop'
 $svc = Get-Service -Name stisvc -ErrorAction SilentlyContinue
 if (-not $svc) {
-  [PSCustomObject]@{ ok = $false; message = 'Serviço WIA (stisvc) não encontrado.' } | ConvertTo-Json -Compress
+  [PSCustomObject]@{ ok = $false; message = 'Servi├ºo WIA (stisvc) n├úo encontrado.' } | ConvertTo-Json -Compress
   return
 }
 if ($svc.Status -ne 'Running') {
@@ -768,17 +768,17 @@ $svc = Get-Service -Name stisvc
 [PSCustomObject]@{
   ok = ($svc.Status -eq 'Running')
   status = [string]$svc.Status
-  message = 'Tentativa de inicialização concluída.'
+  message = 'Tentativa de inicializa├º├úo conclu├¡da.'
 } | ConvertTo-Json -Compress
 `;
 
   const parsed = await runPowerShellJson(script);
-  return parsed || { ok: false, message: "Não foi possível validar o serviço WIA." };
+  return parsed || { ok: false, message: "N├úo foi poss├¡vel validar o servi├ºo WIA." };
 }
 
 async function scanFirstWiaDevice(outputFilePath, preferredDeviceId = "") {
   if (process.platform !== "win32") {
-    const err = new Error("Scanner via WIA está disponível apenas no Windows.");
+    const err = new Error("Scanner via WIA est├í dispon├¡vel apenas no Windows.");
     err.status = 400;
     throw err;
   }
@@ -806,7 +806,7 @@ $device = $scanner.Connect()
 $item = $device.Items.Item(1)
 $dialog = New-Object -ComObject WIA.CommonDialog
 $image = $dialog.ShowTransfer($item, '${WIA_JPEG_FORMAT_ID}', $false)
-if (-not $image) { throw 'Digitalização cancelada.' }
+if (-not $image) { throw 'Digitaliza├º├úo cancelada.' }
 $image.SaveFile($out)
 Write-Output $out
 `;
@@ -896,9 +896,9 @@ function parsePreferenceDateTime(text) {
   const nowParts = getSaoPauloParts(new Date());
   let isoDate = isoDateFromParts(nowParts);
 
-  if (normalized.includes("depois de amanhã") || normalized.includes("depois de amanha")) {
+  if (normalized.includes("depois de amanh├ú") || normalized.includes("depois de amanha")) {
     isoDate = addDaysToIsoDate(isoDate, 2);
-  } else if (normalized.includes("amanhã") || normalized.includes("amanha")) {
+  } else if (normalized.includes("amanh├ú") || normalized.includes("amanha")) {
     isoDate = addDaysToIsoDate(isoDate, 1);
   }
 
@@ -927,10 +927,10 @@ function parsePreferenceDateTime(text) {
 
 function parseConsultationMode(text) {
   const source = String(text || "").toLowerCase();
-  if (source.includes("tele") || source.includes("video") || source.includes("vídeo") || source.includes("remota")) {
+  if (source.includes("tele") || source.includes("video") || source.includes("v├¡deo") || source.includes("remota")) {
     return "teleconsulta";
   }
-  if (source.includes("presencial") || source.includes("consultório") || source.includes("consultorio")) {
+  if (source.includes("presencial") || source.includes("consult├│rio") || source.includes("consultorio")) {
     return "presencial";
   }
   return "";
@@ -1019,7 +1019,7 @@ function resolveMetaSendUrl() {
 
 async function sendWhatsAppMessage(to, text, metadata = {}) {
   const phone = normalizePhoneBR(to);
-  if (!phone) return { ok: false, error: "Telefone inválido" };
+  if (!phone) return { ok: false, error: "Telefone inv├ílido" };
   const provider = resolveWhatsAppProvider();
   const payload = {
     from: WHATSAPP_FROM || undefined,
@@ -1041,7 +1041,7 @@ async function sendWhatsAppMessage(to, text, metadata = {}) {
         payload,
         error: "META_WHATSAPP_TOKEN ou META_WHATSAPP_PHONE_NUMBER_ID ausentes",
       });
-      return { ok: false, error: "Configuração Meta WhatsApp incompleta" };
+      return { ok: false, error: "Configura├º├úo Meta WhatsApp incompleta" };
     }
 
     const metaUrl = resolveMetaSendUrl();
@@ -1124,9 +1124,124 @@ async function sendWhatsAppMessage(to, text, metadata = {}) {
 function buildFriendlyGreeting(patientName) {
   const namePart = patientName ? `, ${patientName}` : "";
   return [
-    `Olá${namePart}! Eu sou a atendente virtual do ORTOPGUIA 😊`,
-    "Vou te ajudar até resolver seu atendimento ortopédico.",
-    "Para começarmos, qual é o motivo principal da sua consulta?",
+    `Ol├í${namePart}! Eu sou a atendente virtual do ORTOPGUIA ­ƒÿè`,
+    "Vou te ajudar at├® resolver seu atendimento ortop├®dico.",
+    "Para come├ºarmos, qual ├® o motivo principal da sua consulta?",
+  ].join("\n");
+}
+
+function includesAnyKeyword(text, keywords) {
+  const source = String(text || "").toLowerCase();
+  return keywords.some((keyword) => source.includes(keyword));
+}
+
+function detectReasonRiskLevel(reasonText) {
+  const emergencyKeywords = [
+    "fratura exposta",
+    "deformidade",
+    "osso aparecendo",
+    "membro torto",
+    "membro deformado",
+    "trauma de alta energia",
+    "acidente de moto",
+    "acidente de carro",
+    "queda de altura",
+    "impossivel apoiar",
+    "imposs├¡vel apoiar",
+    "incapaz de apoiar",
+    "perda de forca",
+    "perda de for├ºa",
+    "dormencia",
+    "dorm├¬ncia",
+    "perda de sensibilidade",
+    "nao consegue mexer",
+    "n├úo consegue mexer",
+    "paralisia",
+    "incontinencia urinaria",
+    "incontin├¬ncia urin├íria",
+    "anestesia em sela",
+    "dor lombar com fraqueza",
+    "febre com articulacao quente",
+    "febre com articula├º├úo quente",
+    "joelho muito quente",
+    "quadril muito quente",
+    "sangramento intenso",
+    "incontinencia",
+    "incontin├¬ncia",
+  ];
+
+  const highKeywords = [
+    "torcao",
+    "tor├º├úo",
+    "entorse",
+    "inchaco",
+    "incha├ºo",
+    "luxacao",
+    "luxa├º├úo",
+    "joelho travado",
+    "dor intensa",
+    "trauma",
+    "queda",
+    "imobilidade",
+  ];
+
+  if (includesAnyKeyword(reasonText, emergencyKeywords)) {
+    return "emergency";
+  }
+  if (includesAnyKeyword(reasonText, highKeywords)) {
+    return "high";
+  }
+  return "moderate";
+}
+
+function suggestConsultationMode(reasonText, riskLevel) {
+  if (riskLevel === "emergency" || riskLevel === "high") return "presencial";
+  const teleKeywords = [
+    "retorno",
+    "duvida",
+    "d├║vida",
+    "resultado de exame",
+    "laudo",
+    "renovacao",
+    "renova├º├úo",
+    "orientacao",
+    "orienta├º├úo",
+  ];
+  if (includesAnyKeyword(reasonText, teleKeywords)) return "teleconsulta";
+  return "teleconsulta";
+}
+
+function parseYesNoIntent(text) {
+  const source = String(text || "").toLowerCase();
+  const hasYes = /\b(sim|tenho|estou|positivo|isso)\b/.test(source);
+  const hasNo = /\b(nao|n├úo|negativo|nenhum|nenhuma)\b/.test(source);
+  if (hasYes && hasNo) return null;
+  if (hasYes) return true;
+  if (hasNo) return false;
+  return null;
+}
+
+function buildEmergencyGuidance(patientName) {
+  const name = patientName ? `${patientName}, ` : "";
+  return [
+    `${name}obrigada por me contar. Pelo que voc├¬ descreveu, seu caso pode precisar de avalia├º├úo imediata.`,
+    "Minha orienta├º├úo segura agora ├® procurar uma emerg├¬ncia ortop├®dica imediatamente (hospital com ortopedia/trauma).",
+    "Se houver piora neurol├│gica s├║bita (fraqueza progressiva, perda de sensibilidade, incapacidade de mover) ou trauma grave, acione o SAMU (192).",
+    "Se mesmo assim voc├¬ quiser que eu siga com agendamento agora, responda: AGENDAR.",
+  ].join("\n");
+}
+
+function buildRedFlagQuestion(patientName) {
+  const name = patientName ? `${patientName}, ` : "";
+  return [
+    `${name}vou fazer uma triagem ortop├®dica r├ípida para te orientar com seguran├ºa, tudo bem?`,
+    "Voc├¬ est├í com algum sinal de alerta ortop├®dico AGORA?",
+    "- trauma com deformidade vis├¡vel ou suspeita de fratura exposta",
+    "- incapacidade de apoiar/mexer o membro ap├│s trauma",
+    "- perda de for├ºa, dorm├¬ncia progressiva ou perda de sensibilidade",
+    "- dor lombar com fraqueza importante, altera├º├úo urin├íria ou anestesia em sela",
+    "- articula├º├úo muito quente, inchada e dolorosa com febre",
+    "Responda com SIM ou NAO.",
   ].join("\n");
 }
 
@@ -1135,14 +1250,14 @@ function buildReminderMessages(appointment) {
   const modeLabel = appointment.mode === "teleconsulta" ? "teleconsulta" : "consulta presencial";
   return {
     dayBefore: [
-      `Olá, ${appointment.patientName || "paciente"}! Passando para confirmar sua ${modeLabel} de amanhã.`,
-      `Data e horário: ${when}`,
+      `Ol├í, ${appointment.patientName || "paciente"}! Passando para confirmar sua ${modeLabel} de amanh├ú.`,
+      `Data e hor├írio: ${when}`,
       "Se precisar ajustar, responda esta mensagem que te ajudamos agora.",
     ].join("\n"),
     oneHour: [
-      `Olá, ${appointment.patientName || "paciente"}! Sua ${modeLabel} é em cerca de 60 minutos.`,
-      `Horário: ${when}`,
-      "Se já estiver pronto(a), seguimos com seu atendimento no horário combinado.",
+      `Ol├í, ${appointment.patientName || "paciente"}! Sua ${modeLabel} ├® em cerca de 60 minutos.`,
+      `Hor├írio: ${when}`,
+      "Se j├í estiver pronto(a), seguimos com seu atendimento no hor├írio combinado.",
     ].join("\n"),
   };
 }
@@ -1205,6 +1320,8 @@ async function processInboundWhatsappMessage({ from, text, name }) {
     session.hasGreeted = true;
     session.stage = "await_reason";
     session.reason = "";
+    session.triageRisk = "";
+    session.recommendedMode = "";
     session.preferredDate = "";
     session.preferredTime = "";
     session.mode = "";
@@ -1218,19 +1335,84 @@ async function processInboundWhatsappMessage({ from, text, name }) {
 
   if (session.stage === "await_reason") {
     session.reason = normalizedText;
+    session.triageRisk = detectReasonRiskLevel(normalizedText);
+    session.recommendedMode = suggestConsultationMode(normalizedText, session.triageRisk);
+    session.stage = session.triageRisk === "emergency" ? "emergency_guidance" : "await_triage_redflags";
+    session.updatedAt = new Date().toISOString();
+    sessionsDb.sessions[from] = session;
+    await writeWhatsappSessions(sessionsDb);
+    const reply =
+      session.stage === "emergency_guidance"
+        ? buildEmergencyGuidance(session.patientName)
+        : buildRedFlagQuestion(session.patientName);
+    await sendWhatsAppMessage(from, reply, {
+      type: session.stage === "emergency_guidance" ? "triage_emergency" : "triage_redflags",
+    });
+    return { ok: true, stage: session.stage, message: reply };
+  }
+
+  if (session.stage === "await_triage_redflags") {
+    const yesNo = parseYesNoIntent(normalizedText);
+    if (yesNo === null) {
+      const retry =
+        "Para eu te orientar com seguran├ºa, me responde com SIM ou NAO sobre os sinais de alerta que te enviei.";
+      await sendWhatsAppMessage(from, retry, { type: "retry_triage_redflags" });
+      return { ok: true, stage: session.stage, message: retry };
+    }
+
+    if (yesNo) {
+      session.triageRisk = "emergency";
+      session.stage = "emergency_guidance";
+      session.updatedAt = new Date().toISOString();
+      sessionsDb.sessions[from] = session;
+      await writeWhatsappSessions(sessionsDb);
+      const reply = buildEmergencyGuidance(session.patientName);
+      await sendWhatsAppMessage(from, reply, { type: "triage_emergency" });
+      return { ok: true, stage: session.stage, message: reply };
+    }
+
     session.stage = "await_datetime";
     session.updatedAt = new Date().toISOString();
     sessionsDb.sessions[from] = session;
     await writeWhatsappSessions(sessionsDb);
-    const reply = "Perfeito, entendi. Qual dia e horário você prefere? Pode me enviar assim: 03/06 às 14:30.";
+    const recommendation =
+      session.recommendedMode === "presencial"
+        ? "Pelo seu relato, a consulta presencial tende a ser mais adequada."
+        : "Pelo seu relato, podemos iniciar com teleconsulta com seguran├ºa.";
+    const reply = [
+      "Obrigada por confirmar. Que bom que n├úo h├í sinais de alerta imediato.",
+      recommendation,
+      "Agora me diga dia e hor├írio de prefer├¬ncia (exemplo: 03/06 ├ás 14:30).",
+    ].join("\n");
     await sendWhatsAppMessage(from, reply, { type: "ask_datetime" });
+    return { ok: true, stage: session.stage, message: reply };
+  }
+
+  if (session.stage === "emergency_guidance") {
+    const wantsScheduleNow = ["agendar", "consulta", "teleconsulta", "presencial"].some((k) =>
+      lowered.includes(k)
+    );
+    if (!wantsScheduleNow) {
+      const reply =
+        "Fico com voc├¬ nessa. Se optar por seguir para emerg├¬ncia agora, te apoio totalmente. Quando quiser retomar comigo, escreva AGENDAR.";
+      await sendWhatsAppMessage(from, reply, { type: "awaiting_emergency_ack" });
+      return { ok: true, stage: session.stage, message: reply };
+    }
+
+    session.stage = "await_datetime";
+    session.updatedAt = new Date().toISOString();
+    sessionsDb.sessions[from] = session;
+    await writeWhatsappSessions(sessionsDb);
+    const reply =
+      "Tudo bem, vou te ajudar com o agendamento agora. Me informe dia e hor├írio de prefer├¬ncia (exemplo: 03/06 ├ás 14:30).";
+    await sendWhatsAppMessage(from, reply, { type: "ask_datetime_after_emergency" });
     return { ok: true, stage: session.stage, message: reply };
   }
 
   if (session.stage === "await_datetime") {
     const parsed = parsePreferenceDateTime(normalizedText);
     if (!parsed.isoDate) {
-      const retry = "Não consegui identificar o dia. Pode me informar no formato DD/MM e, se puder, também o horário?";
+      const retry = "N├úo consegui identificar o dia. Pode me informar no formato DD/MM e, se puder, tamb├®m o hor├írio?";
       await sendWhatsAppMessage(from, retry, { type: "retry_datetime" });
       return { ok: true, stage: session.stage, message: retry };
     }
@@ -1240,16 +1422,26 @@ async function processInboundWhatsappMessage({ from, text, name }) {
     session.updatedAt = new Date().toISOString();
     sessionsDb.sessions[from] = session;
     await writeWhatsappSessions(sessionsDb);
-    const reply =
-      "Ótimo. Você prefere consulta presencial ou teleconsulta? Se quiser, eu já verifico a melhor opção disponível para você.";
+    const recommendation =
+      session.recommendedMode === "presencial"
+        ? "Pela triagem, minha sugest├úo inicial ├® consulta presencial."
+        : "Pela triagem, minha sugest├úo inicial ├® come├ºar por teleconsulta.";
+    const reply = [
+      recommendation,
+      "Voc├¬ prefere presencial ou teleconsulta? Se quiser, pode responder: seguir sugestao.",
+    ].join("\n");
     await sendWhatsAppMessage(from, reply, { type: "ask_mode" });
     return { ok: true, stage: session.stage, message: reply };
   }
 
   if (session.stage === "await_mode") {
-    const mode = parseConsultationMode(normalizedText);
+    let mode = parseConsultationMode(normalizedText);
+    if (!mode && includesAnyKeyword(lowered, ["sugestao", "sugest├úo", "seguir sugestao", "seguir sugest├úo"])) {
+      mode = session.recommendedMode || "teleconsulta";
+    }
     if (!mode) {
-      const retry = "Me confirma por favor: você prefere presencial ou teleconsulta?";
+      const retry =
+        "Me confirma por favor: presencial ou teleconsulta? Se preferir, eu sigo com a sugestao da triagem.";
       await sendWhatsAppMessage(from, retry, { type: "retry_mode" });
       return { ok: true, stage: session.stage, message: retry };
     }
@@ -1263,7 +1455,7 @@ async function processInboundWhatsappMessage({ from, text, name }) {
 
     if (!reserved) {
       const fail =
-        "No momento não encontrei vaga disponível nos próximos dias. Vou encaminhar seu atendimento para a equipe humana te retornar já já.";
+        "No momento n├úo encontrei vaga dispon├¡vel nos pr├│ximos dias. Vou encaminhar seu atendimento para a equipe humana te retornar j├í j├í.";
       await sendWhatsAppMessage(from, fail, { type: "no_availability" });
       return { ok: false, stage: session.stage, message: fail };
     }
@@ -1274,7 +1466,7 @@ async function processInboundWhatsappMessage({ from, text, name }) {
       id: "apt_" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
       patientName,
       phone: from,
-      reason: session.reason || "Queixa ortopédica",
+      reason: session.reason || "Queixa ortop├®dica",
       mode,
       consultAt: reserved.consultAt,
       source: "whatsapp",
@@ -1296,18 +1488,18 @@ async function processInboundWhatsappMessage({ from, text, name }) {
 
     const when = formatDateTimeSaoPaulo(appointment.consultAt);
     const confirmation = [
-      `Perfeito! Seu agendamento foi realizado com sucesso ✅`,
+      `Perfeito! Seu agendamento foi realizado com sucesso Ô£à`,
       `Tipo: ${mode === "teleconsulta" ? "Teleconsulta" : "Presencial"}`,
-      `Data e horário: ${when}`,
+      `Data e hor├írio: ${when}`,
       `Motivo informado: ${appointment.reason}`,
-      "Também vamos te lembrar automaticamente no dia anterior às 18h (quando houver tempo) e 60 minutos antes da consulta.",
+      "Tamb├®m vamos te lembrar automaticamente no dia anterior ├ás 18h (quando houver tempo) e 60 minutos antes da consulta.",
     ].join("\n");
     await sendWhatsAppMessage(from, confirmation, { type: "appointment_confirmed", appointmentId: appointment.id });
     return { ok: true, stage: session.stage, data: appointment, message: confirmation };
   }
 
   const fallback =
-    "Estou aqui para te ajudar. Se quiser novo agendamento, me envie: novo agendamento. Assim eu começo novamente com você.";
+    "Estou aqui para te ajudar. Se quiser novo agendamento, me envie: novo agendamento. Assim eu come├ºo novamente com voc├¬.";
   await sendWhatsAppMessage(from, fallback, { type: "fallback" });
   return { ok: true, stage: session.stage, message: fallback };
 }
@@ -1395,18 +1587,18 @@ function authorizeRepository(req, res, next) {
         id: String(payload.sub || payload.email || "user"),
         email: String(payload.email || ""),
         role: String(payload.role || "unknown"),
-        name: String(payload.name || payload.email || "Usuário"),
+        name: String(payload.name || payload.email || "Usu├írio"),
       };
       return next();
     } catch {
-      return res.status(401).json({ ok: false, error: "Token JWT inválido" });
+      return res.status(401).json({ ok: false, error: "Token JWT inv├ílido" });
     }
   }
 
-  return res.status(401).json({ ok: false, error: "JWT obrigatório para repositório" });
+  return res.status(401).json({ ok: false, error: "JWT obrigat├│rio para reposit├│rio" });
 }
 
-// CORS — apenas origens permitidas
+// CORS ÔÇö apenas origens permitidas
 const allowed = (process.env.ALLOWED_ORIGINS || "")
   .split(",")
   .map((s) => s.trim())
@@ -1417,22 +1609,22 @@ app.use(
     origin(origin, cb) {
       // permite ferramentas locais (sem origin) e origens da lista
       if (!origin || allowed.length === 0 || allowed.includes(origin)) return cb(null, true);
-      return cb(new Error("Origem não permitida pelo CORS: " + origin));
+      return cb(new Error("Origem n├úo permitida pelo CORS: " + origin));
     },
   })
 );
 
-// Saúde do serviço
+// Sa├║de do servi├ºo
 app.get("/api/health", (_req, res) => {
   res.json({ ok: true, service: "ortoguia-backend", agents: listAgents() });
 });
 
-// Lista de agentes disponíveis
+// Lista de agentes dispon├¡veis
 app.get("/api/agents", (_req, res) => {
   res.json({ ok: true, agents: listAgents() });
 });
 
-// Página de captura (scanner HID tipo teclado)
+// P├ígina de captura (scanner HID tipo teclado)
 app.get("/scanner/capture", async (_req, res) => {
   const html = await readScannerCapturePageHtml();
   res.setHeader("Content-Type", "text/html; charset=utf-8");
@@ -1446,7 +1638,7 @@ app.get("/api/scanner/captures", async (req, res) => {
     const db = await readScannerCaptures();
     return res.json({ ok: true, data: { items: db.items.slice(-limit) } });
   } catch (err) {
-    return res.status(500).json({ ok: false, error: err.message || "Erro ao ler histórico de capturas" });
+    return res.status(500).json({ ok: false, error: err.message || "Erro ao ler hist├│rico de capturas" });
   }
 });
 
@@ -1479,7 +1671,7 @@ app.post("/api/scanner/capture", async (req, res) => {
       },
     });
   } catch (err) {
-    return res.status(500).json({ ok: false, error: err.message || "Erro ao capturar número de atendimento" });
+    return res.status(500).json({ ok: false, error: err.message || "Erro ao capturar n├║mero de atendimento" });
   }
 });
 
@@ -1564,7 +1756,7 @@ app.post("/api/scanner/capture-and-link", async (req, res) => {
       },
     });
   } catch (err) {
-    return res.status(500).json({ ok: false, error: err.message || "Erro no fluxo de captura e vínculo" });
+    return res.status(500).json({ ok: false, error: err.message || "Erro no fluxo de captura e v├¡nculo" });
   }
 });
 
@@ -1588,8 +1780,8 @@ app.get("/api/mv/pacientes/:numeroAtendimento", async (req, res) => {
           source,
           message:
             source === "mock"
-              ? "Paciente não localizado no mock MV. Configure data/mv-mock-patients.json para teste local."
-              : "Paciente não localizado no MV remoto para este número de atendimento.",
+              ? "Paciente n├úo localizado no mock MV. Configure data/mv-mock-patients.json para teste local."
+              : "Paciente n├úo localizado no MV remoto para este n├║mero de atendimento.",
         },
       });
     }
@@ -1644,7 +1836,7 @@ app.post("/api/mv/map-preview", (req, res) => {
     const fieldMap = body.fieldMap && typeof body.fieldMap === "object" ? body.fieldMap : null;
 
     if (!payload || typeof payload !== "object") {
-      return res.status(400).json({ ok: false, error: "payload JSON é obrigatório em body.payload" });
+      return res.status(400).json({ ok: false, error: "payload JSON ├® obrigat├│rio em body.payload" });
     }
 
     const extracted = payloadPath
@@ -1654,7 +1846,7 @@ app.post("/api/mv/map-preview", (req, res) => {
     if (!extracted || typeof extracted !== "object") {
       return res.status(400).json({
         ok: false,
-        error: "Não foi possível extrair objeto de paciente do payload",
+        error: "N├úo foi poss├¡vel extrair objeto de paciente do payload",
         data: {
           payloadPathUsed: payloadPath || MV_PATIENT_PAYLOAD_PATH || "(auto)",
         },
@@ -1681,7 +1873,7 @@ app.post("/api/mv/map-preview", (req, res) => {
       },
     });
   } catch (err) {
-    return res.status(500).json({ ok: false, error: err.message || "Erro ao pré-visualizar mapeamento MV" });
+    return res.status(500).json({ ok: false, error: err.message || "Erro ao pr├®-visualizar mapeamento MV" });
   }
 });
 
@@ -1694,13 +1886,13 @@ app.post("/api/processos/:processoId/vincular-paciente", async (req, res) => {
     const pacienteNome = String(body.pacienteNome || "").trim();
 
     if (!processoId) {
-      return res.status(400).json({ ok: false, error: "processoId é obrigatório" });
+      return res.status(400).json({ ok: false, error: "processoId ├® obrigat├│rio" });
     }
     if (!checked.ok) {
       return res.status(400).json({ ok: false, error: checked.error });
     }
     if (!pacienteIdMv) {
-      return res.status(400).json({ ok: false, error: "pacienteIdMv é obrigatório" });
+      return res.status(400).json({ ok: false, error: "pacienteIdMv ├® obrigat├│rio" });
     }
 
     const processLinksDb = await readProcessLinks();
@@ -1713,7 +1905,7 @@ app.post("/api/processos/:processoId/vincular-paciente", async (req, res) => {
       existingLinks: processLinksDb.items,
     });
     if (!rules.allowed) {
-      return res.status(409).json({ ok: false, error: "Regras de vínculo não atendidas", data: { reasons: rules.reasons } });
+      return res.status(409).json({ ok: false, error: "Regras de v├¡nculo n├úo atendidas", data: { reasons: rules.reasons } });
     }
 
     const link = buildProcessLink({
@@ -1736,7 +1928,7 @@ app.use("/api/scanner/files", express.static(SCAN_DIR));
 app.get("/api/scanner/status", async (_req, res) => {
   try {
     if (!SCANNER_ENABLED) {
-      return res.status(503).json({ ok: false, error: "Scanner desativado por configuração (SCANNER_ENABLED=false)" });
+      return res.status(503).json({ ok: false, error: "Scanner desativado por configura├º├úo (SCANNER_ENABLED=false)" });
     }
 
     const scanners = await listWiaScanners();
@@ -1759,7 +1951,7 @@ app.get("/api/scanner/status", async (_req, res) => {
 app.post("/api/scanner/repair-wia", async (_req, res) => {
   try {
     if (!SCANNER_ENABLED) {
-      return res.status(503).json({ ok: false, error: "Scanner desativado por configuração (SCANNER_ENABLED=false)" });
+      return res.status(503).json({ ok: false, error: "Scanner desativado por configura├º├úo (SCANNER_ENABLED=false)" });
     }
 
     const repair = await tryStartWiaService();
@@ -1776,14 +1968,14 @@ app.post("/api/scanner/repair-wia", async (_req, res) => {
       },
     });
   } catch (err) {
-    return res.status(500).json({ ok: false, error: err.message || "Erro ao reparar serviço WIA" });
+    return res.status(500).json({ ok: false, error: err.message || "Erro ao reparar servi├ºo WIA" });
   }
 });
 
 app.post("/api/scanner/scan", async (req, res) => {
   try {
     if (!SCANNER_ENABLED) {
-      return res.status(503).json({ ok: false, error: "Scanner desativado por configuração (SCANNER_ENABLED=false)" });
+      return res.status(503).json({ ok: false, error: "Scanner desativado por configura├º├úo (SCANNER_ENABLED=false)" });
     }
 
     const fileNameHint = (req.body || {}).fileName || "scan";
@@ -1816,7 +2008,7 @@ app.post("/api/scanner/scan", async (req, res) => {
 app.post("/api/auth/login", (req, res) => {
   try {
     if (!JWT_SECRET) {
-      return res.status(503).json({ ok: false, error: "Autenticação indisponível (JWT_SECRET ausente)" });
+      return res.status(503).json({ ok: false, error: "Autentica├º├úo indispon├¡vel (JWT_SECRET ausente)" });
     }
 
     const body = req.body || {};
@@ -1826,21 +2018,21 @@ app.post("/api/auth/login", (req, res) => {
     const lgpdAccepted = !!body.lgpdAccepted;
 
     if (!email || !password) {
-      return res.status(400).json({ ok: false, error: "email e password são obrigatórios" });
+      return res.status(400).json({ ok: false, error: "email e password s├úo obrigat├│rios" });
     }
     if (!lgpdAccepted) {
-      return res.status(400).json({ ok: false, error: "Aceite LGPD é obrigatório" });
+      return res.status(400).json({ ok: false, error: "Aceite LGPD ├® obrigat├│rio" });
     }
 
     const user = authUsers.find((u) => u.email === email);
     if (!user || !user.password || user.password !== password) {
-      return res.status(401).json({ ok: false, error: "Credenciais inválidas" });
+      return res.status(401).json({ ok: false, error: "Credenciais inv├ílidas" });
     }
     if (requestedProfile && user.role !== requestedProfile) {
-      return res.status(403).json({ ok: false, error: "Perfil não autorizado para este login" });
+      return res.status(403).json({ ok: false, error: "Perfil n├úo autorizado para este login" });
     }
     if (user.role !== "medico" && user.role !== "secretaria") {
-      return res.status(403).json({ ok: false, error: "Perfil não permitido" });
+      return res.status(403).json({ ok: false, error: "Perfil n├úo permitido" });
     }
 
     const token = signAccessToken(user);
@@ -1859,7 +2051,7 @@ app.post("/api/auth/login", (req, res) => {
       },
     });
   } catch (err) {
-    return res.status(500).json({ ok: false, error: err.message || "Erro de autenticação" });
+    return res.status(500).json({ ok: false, error: err.message || "Erro de autentica├º├úo" });
   }
 });
 
@@ -1881,7 +2073,7 @@ app.post("/api/agents/:id", async (req, res) => {
 });
 
 /**
- * Atalho dedicado: transcrição -> anamnese estruturada.
+ * Atalho dedicado: transcri├º├úo -> anamnese estruturada.
  * POST /api/anamnese  body: { paciente, transcricao }
  */
 app.post("/api/anamnese", async (req, res) => {
@@ -1920,7 +2112,7 @@ app.get("/api/agenda/availability", async (req, res) => {
 });
 
 /**
- * Criação de consulta na agenda (origem manual, telefone, front etc).
+ * Cria├º├úo de consulta na agenda (origem manual, telefone, front etc).
  * POST /api/agenda/appointments
  * body: { patientName, phone, consultAt, mode, reason, source }
  */
@@ -1931,11 +2123,11 @@ app.post("/api/agenda/appointments", async (req, res) => {
     const phone = normalizePhoneBR(body.phone || body.telefone);
     const modeRaw = String(body.mode || "presencial").trim().toLowerCase();
     const mode = modeRaw === "teleconsulta" ? "teleconsulta" : "presencial";
-    const reason = String(body.reason || "Consulta ortopédica").trim() || "Consulta ortopédica";
+    const reason = String(body.reason || "Consulta ortop├®dica").trim() || "Consulta ortop├®dica";
     const consultAt = String(body.consultAt || "").trim();
 
     if (!consultAt || !Number.isFinite(Date.parse(consultAt))) {
-      return res.status(400).json({ ok: false, error: "consultAt inválido. Use data ISO." });
+      return res.status(400).json({ ok: false, error: "consultAt inv├ílido. Use data ISO." });
     }
 
     const db = await readAppointments();
@@ -1944,7 +2136,7 @@ app.post("/api/agenda/appointments", async (req, res) => {
       (a) => String(a.mode || "") === mode && Date.parse(a.consultAt || "") === consultMs
     );
     if (exists) {
-      return res.status(409).json({ ok: false, error: "Horário já ocupado para essa modalidade" });
+      return res.status(409).json({ ok: false, error: "Hor├írio j├í ocupado para essa modalidade" });
     }
 
     const appointment = {
@@ -1971,7 +2163,7 @@ app.post("/api/agenda/appointments", async (req, res) => {
 });
 
 /**
- * Lista agenda para auditoria e conferência.
+ * Lista agenda para auditoria e confer├¬ncia.
  * GET /api/agenda/appointments
  */
 app.get("/api/agenda/appointments", async (_req, res) => {
@@ -1987,7 +2179,7 @@ app.get("/api/agenda/appointments", async (_req, res) => {
 });
 
 /**
- * Webhook de verificação (ex.: Meta WhatsApp Cloud).
+ * Webhook de verifica├º├úo (ex.: Meta WhatsApp Cloud).
  * GET /api/whatsapp/webhook
  */
 app.get("/api/whatsapp/webhook", (req, res) => {
@@ -2007,7 +2199,7 @@ app.get("/api/whatsapp/webhook", (req, res) => {
 app.post("/api/whatsapp/webhook", async (req, res) => {
   try {
     if (!shouldAuthorizeInbound(req)) {
-      return res.status(401).json({ ok: false, error: "Webhook não autorizado" });
+      return res.status(401).json({ ok: false, error: "Webhook n├úo autorizado" });
     }
     const body = req.body || {};
     const messages = extractIncomingMessages(body);
@@ -2034,7 +2226,7 @@ app.post("/api/whatsapp/inbound-test", async (req, res) => {
     const text = String((req.body || {}).text || "").trim();
     const name = String((req.body || {}).name || "").trim();
     if (!from || !text) {
-      return res.status(400).json({ ok: false, error: "from e text são obrigatórios" });
+      return res.status(400).json({ ok: false, error: "from e text s├úo obrigat├│rios" });
     }
     const result = await processInboundWhatsappMessage({ from, text, name });
     return res.json({ ok: true, data: result });
@@ -2089,7 +2281,7 @@ app.post("/api/repository/documents", async (req, res) => {
     const body = req.body || {};
     const patientId = String(body.patientId || "").trim();
     if (!patientId) {
-      return res.status(400).json({ ok: false, error: "patientId é obrigatório" });
+      return res.status(400).json({ ok: false, error: "patientId ├® obrigat├│rio" });
     }
     const repo = await readRepository();
     const item = {
@@ -2115,7 +2307,7 @@ app.post("/api/repository/documents", async (req, res) => {
     });
     res.json({ ok: true, data: item });
   } catch (err) {
-    res.status(500).json({ ok: false, error: err.message || "Erro ao salvar repositório" });
+    res.status(500).json({ ok: false, error: err.message || "Erro ao salvar reposit├│rio" });
   }
 });
 
@@ -2137,7 +2329,7 @@ app.get("/api/repository/patient/:patientId", async (req, res) => {
     });
     res.json({ ok: true, data: { patientId, documents } });
   } catch (err) {
-    res.status(500).json({ ok: false, error: err.message || "Erro ao ler repositório" });
+    res.status(500).json({ ok: false, error: err.message || "Erro ao ler reposit├│rio" });
   }
 });
 
@@ -2149,7 +2341,7 @@ app.delete("/api/repository/patient/:patientId/documents/:docId", async (req, re
     const patientId = String(req.params.patientId || "").trim();
     const docId = String(req.params.docId || "").trim();
     if (!patientId || !docId) {
-      return res.status(400).json({ ok: false, error: "patientId e docId são obrigatórios" });
+      return res.status(400).json({ ok: false, error: "patientId e docId s├úo obrigat├│rios" });
     }
 
     const repo = await readRepository();
@@ -2158,7 +2350,7 @@ app.delete("/api/repository/patient/:patientId/documents/:docId", async (req, re
     );
 
     if (index < 0) {
-      return res.status(404).json({ ok: false, error: "Documento não encontrado" });
+      return res.status(404).json({ ok: false, error: "Documento n├úo encontrado" });
     }
 
     const [removed] = repo.documents.splice(index, 1);
@@ -2180,12 +2372,12 @@ app.delete("/api/repository/patient/:patientId/documents/:docId", async (req, re
 const PORT = process.env.PORT || 8787;
 const server = http.createServer(app);
 
-// WebSocket de transcrição ao vivo
+// WebSocket de transcri├º├úo ao vivo
 attachTranscriptionWS(server, "/ws/transcribe");
 startReminderWorker();
 
 server.listen(PORT, () => {
   console.log(`[OrtoguIA] Backend de agentes rodando em http://localhost:${PORT}`);
-  console.log(`[OrtoguIA] WebSocket de transcrição em ws://localhost:${PORT}/ws/transcribe`);
+  console.log(`[OrtoguIA] WebSocket de transcri├º├úo em ws://localhost:${PORT}/ws/transcribe`);
   console.log(`[OrtoguIA] Agentes:`, listAgents().map((a) => a.id).join(", "));
 });
