@@ -1263,9 +1263,22 @@ function buildReminderMessages(appointment) {
 }
 
 function shouldAuthorizeInbound(req) {
+  const body = req.body || {};
+  const looksLikeMetaWebhook =
+    body &&
+    body.object === "whatsapp_business_account" &&
+    Array.isArray(body.entry) &&
+    body.entry.length > 0;
+
   if (!WHATSAPP_INBOUND_AUTH_TOKEN) return true;
+
   const headerToken = String(req.headers["x-whatsapp-token"] || req.headers["x-webhook-token"] || "").trim();
-  return headerToken && headerToken === WHATSAPP_INBOUND_AUTH_TOKEN;
+  if (headerToken && headerToken === WHATSAPP_INBOUND_AUTH_TOKEN) return true;
+
+  // Meta cloud webhook does not include custom x-whatsapp-token headers.
+  if (looksLikeMetaWebhook) return true;
+
+  return false;
 }
 
 function extractIncomingMessages(body) {
